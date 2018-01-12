@@ -1,0 +1,20 @@
+infile:
+  0: '/Users/ltibaldo/Fermi/ISM/CO/COGAL_all_mom.fits'
+  
+lmin: 42.
+lmax: 58.
+bmin: -9.
+bmax: 9.
+vmin: -150.
+vmax: 150.
+
+names:
+  0: 'loc-out'
+  1: 'ia-farSgr'
+  2: 'tanSgr'
+  
+dcuts:
+  0: 1.5
+  1: 7
+
+outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v1/'
