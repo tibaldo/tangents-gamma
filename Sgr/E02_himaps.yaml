@@ -21,4 +21,4 @@ dcuts: # two separation for the integration. Careful velocity ambiguity. 2 Cuts 
 #  lng: 2
 #  sig: 2.5 useful later during fit
 
-outdir: '/home/timothy/Desktop/Refs/Mine/Gasmaps/HI/'
+outdir: '/home/timothy/Desktop/Refs/Mine/Gasmaps/HI/' # Don't forget to create the directory
