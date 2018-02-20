@@ -9,7 +9,7 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from matplotlib.patches import Circle
 
-comap = fits.open("/home/timothy/Desktop/Fits/COGAL_deep_mom.fits")[0].data
+comap = fits.open("/home/timothy/Desktop/Fits/COGAL_deep_mom.fits")[0].data # Change to the folder containing the files
 himap = fits.open("/home/timothy/Desktop/Fits/CAR_E03.fits")[0].data
 E02 = fits.open("/home/timothy/Desktop/Refs/Mine/Data_Set/CAR_E02.fits")[0].data
 bessel = fits.getdata("/home/timothy/Desktop/Fits/asu.fit", 1)
