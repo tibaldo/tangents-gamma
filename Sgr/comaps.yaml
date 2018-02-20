@@ -1,5 +1,11 @@
 infile:
   0: '/Users/ltibaldo/Fermi/ISM/CO/COGAL_all_mom.fits'
+
+fitres:
+  0: '/Users/ltibaldo/Fermi/tangents/Quentin/COGAL_all_interp_res_mod.npz'
+
+fitdiag:
+  0: '/Users/ltibaldo/Fermi/tangents/Quentin/COGAL_all_interp_diag_mod.npz'
   
 lmin: 42.
 lmax: 58.
@@ -17,4 +23,6 @@ dcuts:
   0: 1.5
   1: 7
 
-outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v1/'
+useFit: True
+
+outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v2/'

@@ -8,11 +8,12 @@ with open(configfile, "r") as f:
     config = yaml.load(f)
 
 for s in range(len(config['infile'])):
-    cube = gascube(config['infile'][s])
+    cube = gascube(config['infile'][s],
+                   fitres_files=[config['fitres'][s],config['fitdiag'][s]])
     cube.lbmaps(config['lmin'], config['lmax'],
                 config['bmin'], config['bmax'],
                 config['vmin'], config['vmax'],
                 list(config['names'].values()),
                 dcuts=list(config['dcuts'].values()),
-                saveMaps=True,
+                saveMaps=True, useFit=config['useFit'],
                 outdir=config['outdir'])

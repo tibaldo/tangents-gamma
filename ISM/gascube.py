@@ -1,5 +1,6 @@
 from astropy.io import fits
 import numpy as np
+from scipy.io import loadmat
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import AxesGrid
 from iminuit import Minuit
@@ -7,7 +8,9 @@ import time
 
 from reid14_cordes02 import lbd2vlsr
 from epsDetectS import epsDetect
-from mPSV import multiPSV_chi2
+from LineDetect import LineDetect
+from mPSV import multiPSV_chi2  # my version
+from pseudoVoigt import pseudoVoigt  # Quentin's version
 
 
 def add_inner_title(ax, title, loc, size=None, **kwargs):
@@ -24,7 +27,7 @@ def add_inner_title(ax, title, loc, size=None, **kwargs):
 
 
 class gascube:
-    def __init__(self, filename, int2col=1., Ts=-10):
+    def __init__(self, filename, int2col=1., Ts=-10, fitres_files=None):
 
         hdus = fits.open(filename)
 
@@ -88,11 +91,41 @@ class gascube:
             self.data = hdus[0].data[0, :, :, :]
         else:
             print("ERROR, anomalous number of axes in FITS file", filename)
-        self.data[self.data <= (blankvalue + 0.1)] = 0.
         self.data = np.nan_to_num(self.data)
+        self.data[self.data <= (blankvalue + 0.1)] = 0.
 
         self.int2col = int2col
         self.Ts = Ts  # default=-10 is optically thin approx
+
+        # read fit results file if available, and set bool to True
+        self.fitres = {}
+        self.fitres['available'] = False
+        if not fitres_files == None:
+            try:
+                fitres = np.load(fitres_files[0])
+                fitdiag = np.load(fitres_files[1])
+                self.fitres['available'] = True
+            except:
+                try:
+                    fitres = loadmat(fitres_files[0])
+                    fitdiag = loadmat(fitres_files[1])
+                    self.fitres['available'] = True
+                except:
+                    pass
+        if self.fitres['available']:
+            self.fitres['vlin'] = fitres['vlin']
+            self.fitres['hfit'] = fitres['hfit']
+            self.fitres['vfit'] = fitres['vfit']
+            self.fitres['svfit'] = fitres['svfit']
+            self.fitres['etafit'] = fitres['etafit']
+            self.fitres['aic'] = fitdiag['aic']
+            if self.delta['longitude']<0.: #reverse axis
+                self.fitres['vlin'] = self.fitres['vlin'][::-1,:,:]
+                self.fitres['hfit'] = self.fitres['hfit'][::-1, :, :]
+                self.fitres['vfit'] = self.fitres['vfit'][::-1, :, :]
+                self.fitres['svfit'] = self.fitres['svfit'][::-1, :, :]
+                self.fitres['etafit'] = self.fitres['etafit'][::-1, :, :]
+                self.fitres['aic'] = self.fitres['aic'][::-1, :]
 
     def pix2coord(self, pixel, name):
 
@@ -143,6 +176,38 @@ class gascube:
 
         return vel, Tb
 
+    def getFitResults(self, l, b, vmin, vmax):
+
+        nbins = int(
+            self.vscale * (vmax - vmin) / abs(self.delta['velocity'])) + 1
+        vdir = int(self.delta['velocity'] / abs(self.delta['velocity']))
+        il = self.coord2pix(l, 'longitude')
+        ib = self.coord2pix(b, 'latitude')
+        vvmin = self.coord2pix(self.vscale * vmin, 'velocity')
+
+        vel = np.array([])
+        for s in range(nbins):
+            vv = int(vvmin + vdir * s)
+            vel = np.append(vel, self.pix2coord(vv, 'velocity'))
+        vel /= self.vscale
+
+        Tfit = np.zeros(nbins)
+        nlin = np.sum(self.fitres['hfit'][il, ib, :] != 0.)
+
+        PV = np.zeros((nbins, nlin)).astype('float32')
+        if nlin != 0:
+            for klin in range(nlin):
+                PV[:, klin] = pseudoVoigt(self.fitres['hfit'][il, ib, klin],
+                                          self.fitres['vfit'][il, ib, klin],
+                                          self.fitres['svfit'][il, ib, klin],
+                                          self.fitres['etafit'][il, ib, klin], vel)
+
+            Tfit = np.sum(PV, axis=1).astype('float32')
+
+        aic = self.fitres['aic'][il,ib]
+
+        return vel, self.fitres['vfit'][il, ib, :], PV, Tfit, aic
+
     def mPSV_profile_fit(self, vv, tb, lis=1, lng=2, thresh=3., sig=2.5, print_level=1):
 
         # line detection
@@ -189,8 +254,8 @@ class gascube:
 
         return fitres, model, ind_lines, v_lines
 
-    def line(self, l, b, vmin, vmax, vcuts=False, dcuts=False, lineDtc=False, lng=2, lis=1,
-             sig=2.5, thresh=3., fitLine=False):
+    def line(self, l, b, vmin, vmax, vcuts=False, dcuts=False, plotFit=False, lineDtc=False,
+             lng=2, lis=1, sig=2.5, thresh=3., fitLine=False):
 
         vel, Tb = self.getLineData(l, b, vmin, vmax)
 
@@ -214,6 +279,18 @@ class gascube:
                 lat = b
                 vlsr = lbd2vlsr(lon, lat, bound)
                 plt.axvline(vlsr, color='k')
+
+        if plotFit:
+            if self.fitres['available']:
+                vel, vfit, PV, Tfit, aic = self.getFitResults(l, b, vmin, vmax)
+                for klin in range(np.shape(PV)[1]):
+                    self.ax.plot(vel, PV[:,klin], color='g', linestyle='--')
+                self.ax.plot(vel, Tfit, color='r')
+                dev = np.sum(np.abs(Tb - Tfit)) / np.sum(Tb)
+                print('AIC', aic)
+                print('integrated fractional model deviation', dev)
+            else:
+                print("Fit results not available")
 
         if lineDtc:
             ilin, eps = epsDetect(Tb, lis=lis, lng=lng, sig=sig)
@@ -293,7 +370,7 @@ class gascube:
 
     def lbmaps(self, lmin, lmax, bmin, bmax, vmin, vmax, names, vcuts=False, dcuts=False,
                outdir='./', saveMaps=False, display=True, authname='L. Tibaldo',
-               authemail='luigi.tibaldo@irap.omp.eu'):
+               authemail='luigi.tibaldo@irap.omp.eu',useFit=False):
 
         if vcuts == False and dcuts == False:
             raise ValueError("Bounds for map generation not specified")
@@ -345,7 +422,23 @@ class gascube:
                             vlow = vlsr[s]
                             vup = vlsr[s + 1]
                         vel, Tb = self.getLineData(lon, lat, vlow, vup)
-                        vmap[bb, ll] = self.column(vel, Tb)
+                        if useFit:
+                            velf, vfit, PV, Tfit, aic = self.getFitResults(lon, lat, vmin, vmax)
+                            # add integral of all lines that have a peak in the velo range
+                            if aic < 0:
+                                for klin, vlin in enumerate(vfit):
+                                    if vlin >= vlow and vlin<vup:
+                                        vmap[bb,ll] += self.column(velf,PV[:,klin])
+                                    else:
+                                        pass
+                                # correct for the residual colmn density
+                                correction = self.column(vel[(vel>=vlow) & (vel<vup)],Tb[(vel>=vlow) & (vel<vup)])
+                                correction -= self.column(velf[(velf>=vlow) & (velf<vup)],Tfit[(velf>=vlow) & (velf<vup)])
+                                vmap[bb, ll] += correction
+                            else:
+                                vmap[bb, ll] = self.column(vel[(vel>=vlow) & (vel<vup)],Tb[(vel>=vlow) & (vel<vup)])
+                        else:
+                            vmap[bb, ll] = self.column(vel, Tb)
                 im = grid[s].imshow(vmap, extent=extent, interpolation='none', origin='lower')
                 grid.cbar_axes[s].colorbar(im)
                 t = add_inner_title(grid[s], names[s], loc=2)
@@ -475,7 +568,6 @@ class gascube:
                                 vv = vel[(vel >= vlow) & (vel < vup)]
                                 tt = Tb[(vel >= vlow) & (vel < vup)]
                                 vmaps[s, bb, ll] += self.column(vv, tt)
-
 
             if saveMaps:
 

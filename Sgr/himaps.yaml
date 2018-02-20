@@ -1,5 +1,11 @@
 infile:
   0: '/Users/ltibaldo/Fermi/ISM/HI/HI4PI/CAR_E03.fits'
+
+fitres:
+  0: '/Users/ltibaldo/Fermi/tangents/Quentin/CAR_E03_res.mat'
+
+fitdiag:
+  0: '/Users/ltibaldo/Fermi/tangents/Quentin/CAR_E03_diag.mat'
   
 lmin: 42.
 lmax: 58.
@@ -16,9 +22,7 @@ names:
 dcuts:
   0: 1.5
   1: 7
-  
-linefit:
-  lng: 2
-  sig: 2.5
 
-outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v1/'
+useFit: True
+
+outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v2/'
