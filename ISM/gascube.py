@@ -8,7 +8,6 @@ import time
 
 from reid14_cordes02 import lbd2vlsr
 from epsDetectS import epsDetect
-from LineDetect import LineDetect
 from mPSV import multiPSV_chi2  # my version
 from pseudoVoigt import pseudoVoigt  # Quentin's version
 
