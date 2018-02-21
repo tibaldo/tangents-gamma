@@ -1,0 +1,24 @@
+infile:
+  0: '/home/timothy/Desktop/Refs/Mine/Data_Set/CAR_E02.fits'
+
+lmin: 19.
+lmax: 41.08
+bmin: -11.
+bmax: 11.
+vmin: -153.17
+vmax: 153.17
+
+names:
+  0: 'loc-out'
+  1: 'Sgr-Perseus'
+  2: 'tanSct'
+
+dcuts: # two separation for the integration. Careful velocity ambiguity. 2 Cuts define 3 zones.
+  0: 1.2 # Black Circle
+  1: 9.5 # Blue Circle
+
+#linefit:
+#  lng: 2
+#  sig: 2.5 useful later during fit
+
+outdir: '/home/timothy/Desktop/Refs/Mine/Gasmaps/HI/' # Don't forget to create the directory
