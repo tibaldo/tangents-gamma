@@ -124,7 +124,7 @@ for obj in bessel:
     ra = obj['RAJ2000']
     dec = obj['DEJ2000']
     vlsr = obj['VLSR']
-    c = SkyCoord(ra=ra * u.degree, dec=dec * u.degree, frame='icrs')
+    c = SkyCoord(ra=ra * u.degree, dec=dec * u.degree, frame='icrs') # c = SkyCoord('00 42 30 +41 12 00', unit=(u.hourangle, u.deg))
     l = c.galactic.l.deg
     b = c.galactic.b.deg
     dist = 1./obj['plx'] #distance from the Earth in kpc
@@ -144,8 +144,6 @@ for obj in bessel:
     if obj['Arm'] == 'Sgr' and l > 46.: # To ignore
         print('SFR')
         print(l,vlsr,dist)
-
-# c = SkyCoord('00 42 30 +41 12 00', unit=(u.hourangle, u.deg))
 
 #add boundaries for the study of Scutum tangent
 lmin = 27.
