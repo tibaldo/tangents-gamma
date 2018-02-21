@@ -370,7 +370,7 @@ class gascube:
 
     def lbmaps(self, lmin, lmax, bmin, bmax, vmin, vmax, names, vcuts=False, dcuts=False,
                outdir='./', saveMaps=False, display=True, authname='L. Tibaldo',
-               authemail='luigi.tibaldo@irap.omp.eu',useFit=False):
+               authemail='luigi.tibaldo@irap.omp.eu',useFit=False,dev_thresh=0.3):
 
         if vcuts == False and dcuts == False:
             raise ValueError("Bounds for map generation not specified")
@@ -403,49 +403,78 @@ class gascube:
 
             extent = (lmax, lmin, bmin, bmax)
 
-            for s in range(nn):
-                vmap = np.zeros([bbins, lbins])
-                for ll in range(lbins):
-                    for bb in range(bbins):
-                        lpix = self.coord2pix(lmax, 'longitude') - ll * ldir
-                        bpix = self.coord2pix(bmin, 'latitude') + bb * bdir
-                        lon = self.pix2coord(lpix, 'longitude')
-                        lat = self.pix2coord(bpix, 'latitude')
+            vmaps = np.zeros([nn, bbins, lbins])
+            history = []
+
+            for ll in range(lbins):
+                for bb in range(bbins):
+                    lpix = self.coord2pix(lmax, 'longitude') - ll * ldir
+                    bpix = self.coord2pix(bmin, 'latitude') + bb * bdir
+                    lon = self.pix2coord(lpix, 'longitude')
+                    lat = self.pix2coord(bpix, 'latitude')
+                    # if using distance cuts turn them in velocity
+                    if dcuts:
+                        vlsr = lbd2vlsr(lon, lat, np.array(dcuts))
+                        vlsr = np.append(vmin, vlsr)
+                        vlsr = np.append(vlsr, vmax)
+                    # retrieve data, and, in case fit
+                    vel, Tb = self.getLineData(lon, lat, vmin, vmax)
+                    if useFit:
+                        good_fit =  False
+                        velf, vfit, PV, Tfit, aic = self.getFitResults(lon, lat, vmin, vmax)
+                        dev = np.sum(np.abs(Tb - Tfit)) / np.sum(Tb)
+                        if np.sum(np.abs(Tb))==0.:
+                            msg = 'lon {} lat {} NODATA'.format(lon, lat)
+                            history.append(msg)
+                        elif len(vfit)==0:
+                            msg = 'lon {} lat {} fit FAILED'.format(lon, lat)
+                            history.append(msg)
+                        elif np.abs(dev)>dev_thresh:
+                            msg = 'lon {} lat {} fit BAD, integrated fractional model deviation {}'.format(lon, lat, dev)
+                            history.append(msg)
+                        else:
+                            good_fit = True
+                            msg = 'lon {} lat {} integrated fractional model deviation {}'.format(lon, lat, dev)
+                            history.append(msg)
+                    for s in range(nn):
                         if vcuts:
                             vrange = vcuts[s]
                             vlow = eval(vrange[0])
                             vup = eval(vrange[1])
                         elif dcuts:
-                            vlsr = lbd2vlsr(lon, lat, np.array(dcuts))
-                            vlsr = np.append(vmin, vlsr)
-                            vlsr = np.append(vlsr, vmax)
                             vlow = vlsr[s]
                             vup = vlsr[s + 1]
-                        vel, Tb = self.getLineData(lon, lat, vlow, vup)
-                        if useFit:
-                            velf, vfit, PV, Tfit, aic = self.getFitResults(lon, lat, vmin, vmax)
+                        if useFit and good_fit:
                             # add integral of all lines that have a peak in the velo range
-                            if aic < 0:
-                                for klin, vlin in enumerate(vfit):
-                                    if vlin >= vlow and vlin<vup:
-                                        vmap[bb,ll] += self.column(velf,PV[:,klin])
-                                    else:
-                                        pass
-                                # correct for the residual colmn density
-                                correction = self.column(vel[(vel>=vlow) & (vel<vup)],Tb[(vel>=vlow) & (vel<vup)])
-                                correction -= self.column(velf[(velf>=vlow) & (velf<vup)],Tfit[(velf>=vlow) & (velf<vup)])
-                                vmap[bb, ll] += correction
-                            else:
-                                vmap[bb, ll] = self.column(vel[(vel>=vlow) & (vel<vup)],Tb[(vel>=vlow) & (vel<vup)])
+                            for klin, vlin in enumerate(vfit):
+                                if vlin >= vlow and vlin<vup:
+                                    vmaps[s,bb,ll] += self.column(velf,PV[:,klin])
+                                else:
+                                    pass
+                            # correct for the residual colmn density
+                            correction = self.column(vel[(vel>=vlow) & (vel<vup)],Tb[(vel>=vlow) & (vel<vup)])
+                            correction -= self.column(velf[(velf>=vlow) & (velf<vup)],Tfit[(velf>=vlow) & (velf<vup)])
+                            vmaps[s,bb, ll] += correction
                         else:
-                            vmap[bb, ll] = self.column(vel, Tb)
-                im = grid[s].imshow(vmap, extent=extent, interpolation='none', origin='lower')
+                            vmaps[s,bb, ll] = self.column(vel[(vel>=vlow) & (vel<vup)],Tb[(vel>=vlow) & (vel<vup)])
+
+            #display and in case save maps
+            if saveMaps:
+                histxt = ''
+                for s, line in enumerate(history):
+                    if not s == (len(history) - 1):
+                        histxt = histxt + line + '/'
+                    else:
+                        histxt = histxt + line
+
+            for s in range(nn):
+                im = grid[s].imshow(vmaps[s], extent=extent, interpolation='none', origin='lower')
                 grid.cbar_axes[s].colorbar(im)
                 t = add_inner_title(grid[s], names[s], loc=2)
                 t.patch.set_ec("none")
                 t.patch.set_alpha(0.5)
                 if saveMaps:
-                    maphdu = fits.PrimaryHDU(vmap)
+                    maphdu = fits.PrimaryHDU(vmaps[s])
                     lmax_out = self.pix2coord(self.coord2pix(lmax, 'longitude'), 'longitude')
                     bmin_out = self.pix2coord(self.coord2pix(bmin, 'latitude'), 'latitude')
                     bunit = {}
@@ -466,8 +495,11 @@ class gascube:
                         self.commheader(maphdu, 'velocity cuts: ' + str(dcuts))
                     elif dcuts:
                         self.commheader(maphdu, 'heliocentric distance cuts: ' + str(dcuts))
+                    if useFit:
+                        self.commheader(maphdu, 'correction based on line profile fitting')
                     self.commheader(maphdu, 'Map: n. {}, {}'.format(s, names[s]))
                     # history
+                    maphdu.header["RECORD"] = histxt
                     self.history(maphdu, authname, authemail)
                     maphdu.writeto(outdir + 'lbmap_' + names[s] + '.fits')
 
