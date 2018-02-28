@@ -51,6 +51,14 @@ def rt2lonvel(rad,theta):
     lon = np.rad2deg(lon)
     return lon, vlsr
 
+def rt2lond0(rad,theta):
+    x, y = rt2xy(rad, theta)
+    lon = (np.abs(y) < R0 + (np.abs(y) > R0) * (y < 0)) * np.arctan(x / (R0 - y)) + (np.abs(y) > R0) * (
+        y > 0) * (np.sign(x) * np.pi - np.arctan(x / (y - R0)))
+    lon = np.rad2deg(lon)
+    dist = np.sqrt(np.power(x,2)+np.power(y-R0,2))
+    return lon, dist
+
 def lbd2vlsr(l,b,d):
     x, y = lbd2xy(l,b,d)
     rad = np.sqrt(x**2+y**2)
@@ -94,3 +102,9 @@ def arm_lv(s):
     lon,vlsr = rt2lonvel(rr,tt)
 
     return lon, vlsr
+
+def arm_ld0(s):
+    rr, tt = arm_polar(s)
+    lon,dist = rt2lond0(rr,tt)
+
+    return lon, dist

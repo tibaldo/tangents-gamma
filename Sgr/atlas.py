@@ -13,6 +13,7 @@ comap = fits.open("/Users/ltibaldo/Fermi/ISM/CO/COGAL_deep_mom.fits")[0].data
 himap = fits.open("/Users/ltibaldo/Fermi/ISM/HI/HI4PI/CAR_E03.fits")[0].data
 atlasgal = open("/Users/ltibaldo/Fermi/tangents/images2/table3.dat").readlines()
 bessel = fits.getdata("/Users/ltibaldo/Fermi/tangents/images2/asu.fit", 1)
+dustmap = fits.getdata('/Users/ltibaldo/Fermi/ISM/dust_Doug/Marshall2006_3Dextmap.fits',0)
 
 ####color coding#########################################
 col=["#4C72B0", "#55A868", "#C44E52","#8172B2", "#CCB974"]
@@ -89,9 +90,33 @@ himap[himap < 0.1] = 0.1
 hi_plot = ax2.imshow(np.sqrt(himap[347:585, :]), cmap="gray_r", origin='lower', extent=[61.083, 39., -153.17, 153.17])
 ax2.set_aspect("auto", adjustable="box")
 
+#dust extinction
+fig3 = plt.figure("londist", figsize=(10, 4))
+fig3.subplots_adjust(left=0.08, right=0.97, top=0.99, bottom=0.14)
+ax3 = plt.subplot(111)
+ax3.set_xlabel("Galactic longitude [$^\circ$]", fontsize=14, usetex=True)
+ax3.set_ylabel("distance [kpc]", fontsize=14, usetex=True)
+for tick in ax3.xaxis.get_major_ticks():
+    tick.label.set_fontsize(14)
+for tick in ax3.yaxis.get_major_ticks():
+    tick.label.set_fontsize(14)
+ax3.xaxis.set_ticks_position('both')
+ax3.yaxis.set_ticks_position('both')
+
+dustmap[np.isnan(dustmap) == True] = 0.
+for s in range(len(dustmap)-1,0,-1):
+    dustmap[s] = dustmap[s] - dustmap[s-1]
+dustmap = np.sum(dustmap[:,80:121,:],axis=1)#integrate -2 to 2
+dustmap[dustmap<0]=0
+
+dust_plot = plt.imshow(np.log(dustmap), origin='lower', extent=[100, -100, 0., 15.],vmin=-1.5,vmax=0.5,cmap='gray_r')
+ax3.set_aspect("auto", adjustable="box")
+ax3.xaxis.set_ticks(np.arange(100, -110, -10))
+
 # overlay spiral arm model
 for s in range(Narm):
     ll, vlsr = arm_lv(s)
+    ll, dd = arm_ld0(s)
     if s==2:
         ax1.plot(ll[ll>0],vlsr[ll>0],linewidth=10,color=col[s],alpha=0.5,label=lab[s])
         ax1.plot(ll[(ll<0) & (ll>-14)],vlsr[(ll<0) & (ll>-14)],linewidth=10,color=col[s],alpha=0.5)
@@ -99,6 +124,10 @@ for s in range(Narm):
         ax2.plot(ll[ll > 0], vlsr[ll > 0], linewidth=10, color=col[s], alpha=0.5, label=lab[s])
         ax2.plot(ll[(ll < 0) & (ll > -14)], vlsr[(ll < 0) & (ll > -14)], linewidth=10, color=col[s], alpha=0.5)
         ax2.plot(ll[ll < -14], vlsr[ll < -14], linewidth=10, color=col[s], alpha=0.5)
+        ax3.plot(ll[ll > 0], dd[ll > 0], linewidth=10, color=col[s], alpha=0.5, label=lab[s])
+        ax3.plot(ll[(ll < 0) & (ll > -14)], dd[(ll < 0) & (ll > -14)], linewidth=10,
+                 color=col[s], alpha=0.5)
+        ax3.plot(ll[ll < -14], dd[ll < -14], linewidth=10, color=col[s], alpha=0.5)
     elif s==0:
         ax1.plot(ll[ll>0],vlsr[ll>0],linewidth=10,color=col[s],label=lab[s],alpha=0.5)
         ax1.plot(ll[(ll<0) & (ll>-33)],vlsr[(ll<0) & (ll>-33)],linewidth=10,color=col[s],alpha=0.5)
@@ -106,39 +135,49 @@ for s in range(Narm):
         ax2.plot(ll[ll > 0], vlsr[ll > 0], linewidth=10, color=col[s], label=lab[s], alpha=0.5)
         ax2.plot(ll[(ll < 0) & (ll > -33)], vlsr[(ll < 0) & (ll > -33)], linewidth=10, color=col[s], alpha=0.5)
         ax2.plot(ll[ll < -33], vlsr[ll < -33], linewidth=10, color=col[s], alpha=0.5)
+        ax3.plot(ll[ll > 0], dd[ll > 0], linewidth=10, color=col[s], label=lab[s], alpha=0.5)
+        ax3.plot(ll[(ll < 0) & (ll > -33)], dd[(ll < 0) & (ll > -33)], linewidth=10,
+                 color=col[s], alpha=0.5)
+        ax3.plot(ll[ll < -33], dd[ll < -33], linewidth=10, color=col[s], alpha=0.5)
     elif s==4:
         ax1.plot(ll[ll>0],vlsr[ll>0],color=col[s],linewidth=10,label=lab[s],alpha=0.5)
         ax1.plot(ll[ll<0],vlsr[ll<0],color=col[s],linewidth=10,alpha=0.5)
         ax2.plot(ll[ll > 0], vlsr[ll > 0], color=col[s], linewidth=10, label=lab[s], alpha=0.5)
         ax2.plot(ll[ll < 0], vlsr[ll < 0], color=col[s], linewidth=10, alpha=0.5)
+        ax3.plot(ll[ll > 0], dd[ll > 0], color=col[s], linewidth=10, label=lab[s], alpha=0.5)
+        ax3.plot(ll[ll < 0], dd[ll < 0], color=col[s], linewidth=10, alpha=0.5)
     else:
         ax1.plot(ll,vlsr,color=col[s],linewidth=10,label=lab[s],alpha=0.5)
         ax2.plot(ll, vlsr, color=col[s], linewidth=10, label=lab[s], alpha=0.5)
+        ax3.plot(ll, dd, color=col[s], linewidth=10, label=lab[s], alpha=0.5)
+
+
 ax1.legend()
+ax3.legend()
 
 #overlay ATLASGAL clumps
-for clump in atlasgal:
-    clump = clump.split(' ')
-    clump = [entry for entry in clump if entry != '']
-    try:
-        M = float(clump[11])
-        if M>=3:
-            try:
-                vlsr = float(clump[6])
-                lon = float(clump[0].split("+")[0].split("-")[0].split("L")[1])
-                R = float(clump[8])
-                if lon>180.:
-                    lon -=360
-                ax1.plot(lon,vlsr,marker='o',color='r',alpha=0.3,markersize=M-2)
-                ax2.plot(lon, vlsr, marker='o', color='r', alpha=0.3, markersize=M - 2)
-            except:
-                pass
-                #print(clump[0],"velocity unknown")
-        else:
-            pass
-    except:
-        pass
-        #print(clump[0],"Mass unknown")
+# for clump in atlasgal:
+#     clump = clump.split(' ')
+#     clump = [entry for entry in clump if entry != '']
+#     try:
+#         M = float(clump[11])
+#         if M>=3:
+#             try:
+#                 vlsr = float(clump[6])
+#                 lon = float(clump[0].split("+")[0].split("-")[0].split("L")[1])
+#                 R = float(clump[8])
+#                 if lon>180.:
+#                     lon -=360
+#                 ax1.plot(lon,vlsr,marker='o',color='r',alpha=0.3,markersize=M-2)
+#                 ax2.plot(lon, vlsr, marker='o', color='r', alpha=0.3, markersize=M - 2)
+#             except:
+#                 pass
+#                 #print(clump[0],"velocity unknown")
+#         else:
+#             pass
+#     except:
+#         pass
+#         #print(clump[0],"Mass unknown")
 
 #overlay BeSSel high-mass SFR
 for obj in bessel:
@@ -154,17 +193,19 @@ for obj in bessel:
     try:
         ax1.plot(l, vlsr, marker='^', color=coldic[obj["Arm"]], alpha=0.7)
         ax2.plot(l, vlsr, marker='^', color=coldic[obj["Arm"]], alpha=0.7)
+        ax3.plot(l, dist, marker='^', color=coldic[obj["Arm"]], alpha=0.7)
     except:
         ax1.plot(l, vlsr, marker='^', color='k', alpha=0.3)
         ax2.plot(l, vlsr, marker='^', color='k', alpha=0.3)
+        ax3.plot(l, dist, marker='^', color='k', alpha=0.3)
     x, y = lbd2xy(l,b,dist)
     try:
         ax0.plot(x, y, marker='^', color=coldic[obj["Arm"]], alpha=0.7)
     except:
         ax0.plot(x, y, marker='^', color='k', alpha=0.3)
-    if obj['Arm'] == 'Sgr' and l > 46.:
-        print('SFR')
-        print(l,vlsr,dist)
+    # if obj['Arm'] == 'Sgr' and l > 46.:
+    #     print('SFR')
+    #     print(l,vlsr,dist)
 
 #add boundaries for study of Sgr tangent
 lmin = 46.
@@ -179,12 +220,15 @@ y2 = R0 + 2*x*(y-R0)/x
 ax0.plot([0,2*x],[R0,y2],linestyle='--',color='k')
 ax1.vlines([lmin,lmax],-157.3, 157.3,linestyle='--',color='k')
 ax2.vlines([lmin,lmax],-153.17, 153.17,linestyle='--',color='k')
+ax3.vlines([lmin,lmax],0, 15.,linestyle='--',color='k')
 lvals=np.linspace(lmin,lmax,200)
 for s, bound in enumerate(bounds):
     circ = Circle((0,R0),bound,color=boundcolors[s], linewidth=1.5, linestyle='--',fill=False,zorder=3)
     ax0.add_patch(circ)
     vbound = lbd2vlsr(lvals,0,bound)
+    dbound = bound * np.ones(len(lvals))
     ax1.plot(lvals,vbound,color=boundcolors[s], linewidth=1.5, linestyle='--')
     ax2.plot(lvals, vbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
+    ax3.plot(lvals, dbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
 
 plt.show()

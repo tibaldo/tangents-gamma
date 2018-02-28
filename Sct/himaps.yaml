@@ -23,6 +23,6 @@ dcuts: # two separation for the integration. Careful velocity ambiguity. 2 Cuts 
   0: 1.2 # Black Circle
   1: 9.5 # Blue Circle
 
-useFit: False
+useFit: True
 
 outdir: '../Data/Gasmaps/Sct/HI/' # Don't forget to create the directory
