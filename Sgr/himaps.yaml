@@ -23,6 +23,8 @@ dcuts:
   0: 1.5
   1: 3
 
+Ts: 140
+
 useFit: True
 
-outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v5/'
+outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v6/'

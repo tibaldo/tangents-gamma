@@ -5,13 +5,13 @@ scale: 100.
 gasmaps:
   0:
       co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v5/lbmap_loc-out.fits'
-      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v5/lbmap_loc-out.fits'
+      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v6/lbmap_loc-out.fits'
   1:
       co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v5/lbmap_ia.fits'
-      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v5/lbmap_ia.fits'
+      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v6/lbmap_ia.fits'
   2:
       co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v5/lbmap_Sgr.fits'
-      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v5/lbmap_Sgr.fits'
+      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v6/lbmap_Sgr.fits'
 
 lmin: 42.
 lmax: 58.
@@ -19,7 +19,7 @@ bmin: -9.
 bmax: 9.
 pixsize: 0.1
 
-mask: 'lon > 46. and lon < 54. and lat > -4. and lat < 5. and not ((lon-49.4)**2+(lat+0.3)**2)<0.35**2'
+mask: 'lon > 44. and lon < 56. and lat > -5.5 and lat < 6.5 and not ((lon-49.4)**2+(lat+0.3)**2)<0.35**2'
 
 names:
   0: 'loc-out'
@@ -46,4 +46,4 @@ dcuts:
       min: 3.
       max: 7.
 
-outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/dust/v6/'
+outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/dust/v8/'
