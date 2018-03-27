@@ -1,0 +1,38 @@
+
+infile: '/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/Dust2.fits'
+
+scale: 1000000.
+
+colname: TAU353
+
+errorname: ERR_TAU
+
+gasmaps:
+  0:
+      co: '/home/timothy/Desktop/Data/Gasmaps/Sct/CO/lbmap_Outer.fits'
+      hi: '/home/timothy/Desktop/Data/Gasmaps/Sct/HI/lbmap_Outer.fits'
+  1:
+      co: '/home/timothy/Desktop/Data/Gasmaps/Sct/CO/lbmap_loc-inter.fits'
+      hi: '/home/timothy/Desktop/Data/Gasmaps/Sct/HI/lbmap_loc-inter.fits'
+  2:
+      co: '/home/timothy/Desktop/Data/Gasmaps/Sct/CO/lbmap_Sgr-Perseus.fits'
+      hi: '/home/timothy/Desktop/Data/Gasmaps/Sct/HI/lbmap_Sgr-Perseus.fits'
+  3:
+      co: '/home/timothy/Desktop/Data/Gasmaps/Sct/CO/lbmap_tanSct.fits'
+      hi: '/home/timothy/Desktop/Data/Gasmaps/Sct/HI/lbmap_tanSct.fits'
+
+lmin: 23.
+lmax: 38.
+bmin: -9.
+bmax: 9.
+pixsize: 0.1
+
+mask: 'lon > 26. and lon < 35. and lat > -6. and lat < 6.'
+
+names:
+  0: 'Outer'
+  1: 'loc-inter'
+  2: 'Sgr-Perseus'
+  3: 'tanSct'
+
+outdir: '/home/timothy/Desktop/Data/Gasmaps/Sct/Dust2/'
