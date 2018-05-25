@@ -185,7 +185,7 @@ class dustmap_residuals:
         return fitres, residuals, weights
 
     def make(self, lmin, lmax, bmin, bmax, pixsize, outfilename, names, outdir='./',
-             mask='None', name='L. Tibaldo', email='luigi.tibaldo@irap.omp.edu'):
+             mask='None', name='L. Tibaldo', email='luigi.tibaldo@irap.omp.eu'):
         """
         Make residual maps over a sky region
         :param lmin: `float`

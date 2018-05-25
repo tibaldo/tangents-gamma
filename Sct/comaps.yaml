@@ -1,28 +1,30 @@
 infile:
-  0: '../Data/Dataset/COGAL_all_interp.fits'
+  0: '/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/COGAL_moment.fits'
 
 fitres:
-  0: '../Data/Dataset/Quentin/COGAL_all_interp_res_mod.npz'
+  0: '/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/Quentin/COGAL_all_interp_res_mod.npz'
 
 fitdiag:
-  0: '../Data/Dataset/Quentin/COGAL_all_interp_diag_mod.npz'
+  0: '/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/Quentin/COGAL_all_interp_diag_mod.npz'
 
-lmin: 19.
-lmax: 41.08
-bmin: -11.
-bmax: 11.
+lmin: 23.
+lmax: 38.
+bmin: -9.
+bmax: 9.
 vmin: -153.17
 vmax: 153.17
 
 names:
-  0: 'loc-out'
-  1: 'Sgr-Perseus'
-  2: 'tanSct'
+  0: 'Outer'
+  1: 'loc-inter'
+  2: 'Sgr-Perseus'
+  3: 'tanSct'
 
 dcuts: # two separation for the integration. Careful velocity ambiguity. 2 Cuts define 3 zones.
-  0: 1.2 # Black Circle
-  1: 9.5 # Blue Circle
+  0: 15.3 # Yellow Circle
+  1: 1.2 # Black Circle
+  2: 9.39 # Blue Circle
 
 useFit: False
 
-outdir: '../Data/Gasmaps/Sct/CO/' # Don't forget to create the directory
+outdir: '/home/timothy/Desktop/Data/Gasmaps/Sct/CO/' # Don't forget to create the directory

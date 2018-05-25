@@ -220,7 +220,7 @@ class extcube_residuals:
         return fitres, residuals
 
     def make(self, lmin, lmax, bmin, bmax, pixsize, outfilename, outdir='./',
-             mask='1', name='L. Tibaldo', email='luigi.tibaldo@irap.omp.edu'):
+             mask='1', name='L. Tibaldo', email='luigi.tibaldo@irap.omp.eu'):
         """
         Make residual maps over a sky region
         :param lmin: `float`
