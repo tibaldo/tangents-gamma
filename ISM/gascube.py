@@ -136,8 +136,8 @@ class gascube:
     def coord2pix(self, coordinate, name):
 
         # transform coordinate value into pixel value for a given coordinate
-        pixel = round(self.refpix[name] + (1. / self.delta[name]) * (
-            coordinate - self.refval[name]))
+        pixel = int(round(self.refpix[name] + (1. / self.delta[name]) * (
+            coordinate - self.refval[name])))
         return pixel
 
     def getValue(self, ll, bb, vv):
