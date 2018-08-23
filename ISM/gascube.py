@@ -3,6 +3,7 @@ import numpy as np
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import AxesGrid
+from matplotlib.colors import LogNorm
 from iminuit import Minuit
 import time
 
@@ -118,8 +119,8 @@ class gascube:
             self.fitres['svfit'] = fitres['svfit']
             self.fitres['etafit'] = fitres['etafit']
             self.fitres['aic'] = fitdiag['aic']
-            if self.delta['longitude']<0.: #reverse axis
-                self.fitres['vlin'] = self.fitres['vlin'][::-1,:,:]
+            if self.delta['longitude'] < 0.:  # reverse axis
+                self.fitres['vlin'] = self.fitres['vlin'][::-1, :, :]
                 self.fitres['hfit'] = self.fitres['hfit'][::-1, :, :]
                 self.fitres['vfit'] = self.fitres['vfit'][::-1, :, :]
                 self.fitres['svfit'] = self.fitres['svfit'][::-1, :, :]
@@ -203,7 +204,7 @@ class gascube:
 
             Tfit = np.sum(PV, axis=1).astype('float32')
 
-        aic = self.fitres['aic'][il,ib]
+        aic = self.fitres['aic'][il, ib]
 
         return vel, self.fitres['vfit'][il, ib, :], PV, Tfit, aic
 
@@ -283,7 +284,7 @@ class gascube:
             if self.fitres['available']:
                 vel, vfit, PV, Tfit, aic = self.getFitResults(l, b, vmin, vmax)
                 for klin in range(np.shape(PV)[1]):
-                    self.ax.plot(vel, PV[:,klin], color='g', linestyle='--')
+                    self.ax.plot(vel, PV[:, klin], color='g', linestyle='--')
                 self.ax.plot(vel, Tfit, color='r')
                 dev = np.sum(np.abs(Tb - Tfit)) / np.sum(Tb)
                 print('AIC', aic)
@@ -369,7 +370,7 @@ class gascube:
 
     def lbmaps(self, lmin, lmax, bmin, bmax, vmin, vmax, names, vcuts=False, dcuts=False,
                outdir='./', saveMaps=False, display=True, authname='L. Tibaldo',
-               authemail='luigi.tibaldo@irap.omp.eu',useFit=False,dev_thresh=0.3):
+               authemail='luigi.tibaldo@irap.omp.eu', useFit=False, dev_thresh=0.3):
 
         if vcuts == False and dcuts == False:
             raise ValueError("Bounds for map generation not specified")
@@ -419,21 +420,23 @@ class gascube:
                     # retrieve data, and, in case fit
                     vel, Tb = self.getLineData(lon, lat, vmin, vmax)
                     if useFit:
-                        good_fit =  False
+                        good_fit = False
                         velf, vfit, PV, Tfit, aic = self.getFitResults(lon, lat, vmin, vmax)
                         dev = np.sum(np.abs(Tb - Tfit)) / np.sum(Tb)
-                        if np.sum(np.abs(Tb))==0.:
+                        if np.sum(np.abs(Tb)) == 0.:
                             msg = 'lon {} lat {} NODATA'.format(lon, lat)
                             history.append(msg)
-                        elif len(vfit)==0:
+                        elif len(vfit) == 0:
                             msg = 'lon {} lat {} fit FAILED'.format(lon, lat)
                             history.append(msg)
-                        elif np.abs(dev)>dev_thresh:
-                            msg = 'lon {} lat {} fit BAD, integrated fractional model deviation {}'.format(lon, lat, dev)
+                        elif np.abs(dev) > dev_thresh:
+                            msg = 'lon {} lat {} fit BAD, integrated fractional model deviation {}'.format(
+                                lon, lat, dev)
                             history.append(msg)
                         else:
                             good_fit = True
-                            msg = 'lon {} lat {} integrated fractional model deviation {}'.format(lon, lat, dev)
+                            msg = 'lon {} lat {} integrated fractional model deviation {}'.format(
+                                lon, lat, dev)
                             history.append(msg)
                     for s in range(nn):
                         if vcuts:
@@ -446,18 +449,21 @@ class gascube:
                         if useFit and good_fit:
                             # add integral of all lines that have a peak in the velo range
                             for klin, vlin in enumerate(vfit):
-                                if vlin >= vlow and vlin<vup:
-                                    vmaps[s,bb,ll] += self.column(velf,PV[:,klin])
+                                if vlin >= vlow and vlin < vup:
+                                    vmaps[s, bb, ll] += self.column(velf, PV[:, klin])
                                 else:
                                     pass
                             # correct for the residual colmn density
-                            correction = self.column(vel[(vel>=vlow) & (vel<vup)],Tb[(vel>=vlow) & (vel<vup)])
-                            correction -= self.column(velf[(velf>=vlow) & (velf<vup)],Tfit[(velf>=vlow) & (velf<vup)])
-                            vmaps[s,bb, ll] += correction
+                            correction = self.column(vel[(vel >= vlow) & (vel < vup)],
+                                                     Tb[(vel >= vlow) & (vel < vup)])
+                            correction -= self.column(velf[(velf >= vlow) & (velf < vup)],
+                                                      Tfit[(velf >= vlow) & (velf < vup)])
+                            vmaps[s, bb, ll] += correction
                         else:
-                            vmaps[s,bb, ll] = self.column(vel[(vel>=vlow) & (vel<vup)],Tb[(vel>=vlow) & (vel<vup)])
+                            vmaps[s, bb, ll] = self.column(vel[(vel >= vlow) & (vel < vup)],
+                                                           Tb[(vel >= vlow) & (vel < vup)])
 
-            #display and in case save maps
+            # display and in case save maps
             if saveMaps:
                 histxt = ''
                 for s, line in enumerate(history):
@@ -467,7 +473,8 @@ class gascube:
                         histxt = histxt + line
 
             for s in range(nn):
-                im = grid[s].imshow(vmaps[s], extent=extent, interpolation='none', origin='lower')
+                im = grid[s].imshow(vmaps[s], extent=extent, interpolation='none',
+                                    origin='lower')
                 grid.cbar_axes[s].colorbar(im)
                 t = add_inner_title(grid[s], names[s], loc=2)
                 t.patch.set_ec("none")
@@ -639,3 +646,61 @@ class gascube:
 
             else:
                 pass
+
+    def vdiagram(self, lmin, lmax, bmin, bmax, vmin, vmax, integrate='latitude'):
+
+        # convert boundaries into pixels
+        imin = self.coord2pix(lmin, 'longitude')
+        imax = self.coord2pix(lmax, 'longitude')
+        jmin = self.coord2pix(bmin, 'latitude')
+        jmax = self.coord2pix(bmax, 'latitude')
+        kmin = self.coord2pix(vmin*self.vscale, 'velocity')
+        kmax = self.coord2pix(vmax*self.vscale, 'velocity')
+        # establish sense of increasing longitude
+        ldir = self.delta['longitude'] / abs(self.delta['longitude'])
+
+        # set boundaries according to axes order and orientation
+        pixmin = [0, 0, 0]
+        pixmax = [0, 0, 0]
+        if ldir > 0:
+            pixmin[self.atlas['longitude'] - 1] = imin
+            pixmax[self.atlas['longitude'] - 1] = imax
+        else:
+            pixmin[self.atlas['longitude'] - 1] = imax
+            pixmax[self.atlas['longitude'] - 1] = imin
+        pixmin[self.atlas['latitude'] - 1] = jmin
+        pixmax[self.atlas['latitude'] - 1] = jmax
+        pixmin[self.atlas['velocity'] - 1] = kmin
+        pixmax[self.atlas['velocity'] - 1] = kmax
+        im = self.data[pixmin[2]:pixmax[2], pixmin[1]:pixmax[1], pixmin[0]:pixmax[0]]
+
+        # if we integrate over latitude make sure longitude increases right to left
+        if integrate == 'latitude' and ldir > 0:
+            im = np.flip(im,axis=(3 - self.atlas['longitude']))
+        # integrate over appropriate axis
+        im = np.sum(im, axis=(3 - self.atlas[integrate]))
+
+        #create the figure
+        ax = plt.subplot(111)
+
+        #reorder so that axes appear in the "right" place
+        #and set figure extent and axis labels
+        if integrate=='latitude':
+            if self.atlas['velocity'] < self.atlas['longitude']:
+                im = im.transpose()
+            extent = (lmax,lmin,vmin,vmax)
+            ax.set_xlabel('$l$ (deg)')
+            ax.set_ylabel('V (km s$^{-1}$)')
+        if integrate=='longitude':
+            if self.atlas['velocity'] > self.atlas['latitude']:
+                im = im.transpose()
+            extent = (vmin,vmax,bmin,bmax)
+            ax.set_xlabel('V (km s$^{-1}$)')
+            ax.set_ylabel('$b$ (deg)')
+
+        # display the map
+        plt.imshow(im, interpolation='none',origin='lower', extent = extent, aspect='auto',
+                   norm=LogNorm(),cmap='jet')
+        cbar = plt.colorbar(label="K deg")
+
+        plt.show()
