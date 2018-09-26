@@ -13,7 +13,7 @@ comap = fits.open("/Users/ltibaldo/Fermi/ISM/CO/COGAL_deep_mom.fits")[0].data
 himap = fits.open("/Users/ltibaldo/Fermi/ISM/HI/HI4PI/CAR_E03.fits")[0].data
 atlasgal = open("/Users/ltibaldo/Fermi/tangents/images2/table3.dat").readlines()
 bessel = fits.getdata("/Users/ltibaldo/Fermi/tangents/images2/asu.fit", 1)
-dustmap = fits.getdata('/Users/ltibaldo/Fermi/ISM/dust_Doug/Marshall2006_3Dextmap.fits',0)
+dustmap = fits.getdata('/Users/ltibaldo/Fermi/ISM/dust/extinction_cubes/Marshall2006_3Dextmap.fits',0)
 
 ####color coding#########################################
 col=["#4C72B0", "#55A868", "#C44E52","#8172B2", "#CCB974"]
@@ -210,8 +210,8 @@ for obj in bessel:
 #add boundaries for study of Sgr tangent
 lmin = 46.
 lmax = 54.
-bounds=[1.5,3.,7.,9]
-boundcolors = ['k','g','b','r']
+bounds=[1.5,3.,7.,9,11.5]
+boundcolors = ['k','g','b','r','c']
 x,y = lbd2xy(lmin,0,R0)
 y2 = R0 + 2*x*(y-R0)/x
 ax0.plot([0,2*x],[R0,y2],linestyle='--',color='k')
