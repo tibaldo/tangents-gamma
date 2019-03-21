@@ -369,7 +369,7 @@ class gascube:
         hdu.header.add_history('on ' + time.ctime() + ' ' + time.tzname[1])
 
     def lbmaps(self, lmin, lmax, bmin, bmax, vmin, vmax, names, vcuts=False, dcuts=False,
-               outdir='./', saveMaps=False, display=True, authname='L. Tibaldo',
+               outdir='./', name_tag = '', saveMaps=False, display=True, authname='L. Tibaldo',
                authemail='luigi.tibaldo@irap.omp.eu', useFit=False, dev_thresh=0.3):
 
         if vcuts == False and dcuts == False:
@@ -403,7 +403,7 @@ class gascube:
 
             extent = (lmax, lmin, bmin, bmax)
 
-            vmaps = np.zeros([nn, bbins, lbins])
+            self.vmaps = np.zeros([nn, bbins, lbins])
             history = []
 
             for ll in range(lbins):
@@ -450,7 +450,7 @@ class gascube:
                             # add integral of all lines that have a peak in the velo range
                             for klin, vlin in enumerate(vfit):
                                 if vlin >= vlow and vlin < vup:
-                                    vmaps[s, bb, ll] += self.column(velf, PV[:, klin])
+                                    self.vmaps[s, bb, ll] += self.column(velf, PV[:, klin])
                                 else:
                                     pass
                             # correct for the residual colmn density
@@ -458,9 +458,9 @@ class gascube:
                                                      Tb[(vel >= vlow) & (vel < vup)])
                             correction -= self.column(velf[(velf >= vlow) & (velf < vup)],
                                                       Tfit[(velf >= vlow) & (velf < vup)])
-                            vmaps[s, bb, ll] += correction
+                            self.vmaps[s, bb, ll] += correction
                         else:
-                            vmaps[s, bb, ll] = self.column(vel[(vel >= vlow) & (vel < vup)],
+                            self.vmaps[s, bb, ll] = self.column(vel[(vel >= vlow) & (vel < vup)],
                                                            Tb[(vel >= vlow) & (vel < vup)])
 
             # display and in case save maps
@@ -473,41 +473,45 @@ class gascube:
                         histxt = histxt + line
 
             for s in range(nn):
-                im = grid[s].imshow(vmaps[s], extent=extent, interpolation='none',
-                                    origin='lower')
+                im = grid[s].imshow(self.vmaps[s], extent=extent, interpolation='none',
+                                    origin='lower',vmin=-5.,cmap='Spectral_r')
                 grid.cbar_axes[s].colorbar(im)
                 t = add_inner_title(grid[s], names[s], loc=2)
                 t.patch.set_ec("none")
                 t.patch.set_alpha(0.5)
                 if saveMaps:
-                    maphdu = fits.PrimaryHDU(vmaps[s])
-                    lmax_out = self.pix2coord(self.coord2pix(lmax, 'longitude'), 'longitude')
-                    bmin_out = self.pix2coord(self.coord2pix(bmin, 'latitude'), 'latitude')
-                    bunit = {}
-                    if self.int2col == 1:
-                        bunit['unit'] = 'K km s-1'
-                        bunit['quantity'] = 'v-integrated Tb'
-                    else:
-                        bunit['unit'] = 'cm-2'
-                        bunit['quantity'] = 'N(H)'
-                    self.mapheader(maphdu, lmax_out, bmin_out, bunit)
-                    # comments
-                    if self.int2col != 1.:
-                        msg = 'Integral to column: {} cm-2 (K km s-1)-1'.format(self.int2col)
-                        self.commheader(maphdu, msg)
-                    if self.Ts != -10:
-                        self.commheader(maphdu, 'Spin temperature: {} K'.format(self.Ts))
-                    if vcuts:
-                        self.commheader(maphdu, 'velocity cuts: ' + str(dcuts))
-                    elif dcuts:
-                        self.commheader(maphdu, 'heliocentric distance cuts: ' + str(dcuts))
-                    if useFit:
-                        self.commheader(maphdu, 'correction based on line profile fitting')
-                    self.commheader(maphdu, 'Map: n. {}, {}'.format(s, names[s]))
-                    # history
-                    maphdu.header["RECORD"] = histxt
-                    self.history(maphdu, authname, authemail)
-                    maphdu.writeto(outdir + 'lbmap_' + names[s] + '.fits')
+                    try:
+                        maphdu = fits.PrimaryHDU(self.vmaps[s])
+                        lmax_out = self.pix2coord(self.coord2pix(lmax, 'longitude'), 'longitude')
+                        bmin_out = self.pix2coord(self.coord2pix(bmin, 'latitude'), 'latitude')
+                        bunit = {}
+                        if self.int2col == 1:
+                            bunit['unit'] = 'K km s-1'
+                            bunit['quantity'] = 'v-integrated Tb'
+                        else:
+                            bunit['unit'] = 'cm-2'
+                            bunit['quantity'] = 'N(H)'
+                        self.mapheader(maphdu, lmax_out, bmin_out, bunit)
+                        # comments
+                        if self.int2col != 1.:
+                            msg = 'Integral to column: {} cm-2 (K km s-1)-1'.format(self.int2col)
+                            self.commheader(maphdu, msg)
+                        if self.Ts != -10:
+                            self.commheader(maphdu, 'Spin temperature: {} K'.format(self.Ts))
+                        if vcuts:
+                            self.commheader(maphdu, 'velocity cuts: ' + str(dcuts))
+                        elif dcuts:
+                            self.commheader(maphdu, 'heliocentric distance cuts: ' + str(dcuts))
+                        if useFit:
+                            self.commheader(maphdu, 'correction based on line profile fitting')
+                        self.commheader(maphdu, 'Map: n. {}, {}'.format(s, names[s]))
+                        # history
+                        maphdu.header["RECORD"] = histxt
+                        self.history(maphdu, authname, authemail)
+                        maphdu.writeto(outdir + 'lbmap_' + name_tag + names[s] + '.fits')
+                        print("Saved map {}".format(s))
+                    except:
+                        print("Saving map {} failed".format(s))
 
             grid.axes_llc.set_xlabel('$l$ (deg)')
             grid.axes_llc.set_ylabel('$b$ (deg)')
