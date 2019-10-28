@@ -273,74 +273,74 @@ class gascube:
     #
     #     return fitres, model, ind_lines, v_lines
     #
-    # def line(self, l, b, vmin, vmax, vcuts=False, dcuts=False, plotFit=False, lineDtc=False,
-    #          lng=2, lis=1, sig=2.5, thresh=3., fitLine=False):
-    #
-    #     vel, Tb = self.getLineData(l, b, vmin, vmax)
-    #
-    #     self.ax = plt.subplot(111)
-    #     self.ax.plot(vel, Tb, linewidth=0, color='k', marker='o', markersize=3)
-    #     self.ax.set_xlabel('$V_\mathrm{LSR}$ (km s$^{-1}$)')
-    #     self.ax.set_ylabel('$T_\mathrm{B}$ (K)')
-    #
-    #     if vcuts:
-    #         for s, vrange in enumerate(vcuts):
-    #             lon = l
-    #             lat = b
-    #             vmin = eval(vrange[0])
-    #             vmax = eval(vrange[1])
-    #             plt.axvline(vmin, color='k')
-    #             plt.axvline(vmax, color='k')
-    #
-    #     if dcuts:
-    #         for bound in dcuts:
-    #             lon = l
-    #             lat = b
-    #             vlsr = lbd2vlsr(lon, lat, bound)
-    #             plt.axvline(vlsr, color='k')
-    #
-    #     if plotFit:
-    #         if self.fitres['available']:
-    #             vel, vfit, PV, Tfit, aic = self.getFitResults(l, b, vmin, vmax)
-    #             for klin in range(np.shape(PV)[1]):
-    #                 self.ax.plot(vel, PV[:, klin], color='g', linestyle='--')
-    #             self.ax.plot(vel, Tfit, color='r')
-    #             dev = np.sum(np.abs(Tb - Tfit)) / np.sum(Tb)
-    #             print('AIC', aic)
-    #             print('integrated fractional model deviation', dev)
-    #         else:
-    #             print("Fit results not available")
-    #
-    #     if lineDtc:
-    #         ilin, eps = epsDetect(Tb, lis=lis, lng=lng, sig=sig)
-    #         ilin = np.array(ilin)
-    #         eps = np.array(eps)
-    #         ilin = ilin[eps > thresh]
-    #         eps = eps[eps > thresh]
-    #         for ii in range(len(ilin)):
-    #             self.ax.plot(vel[ilin[ii]], eps[ii], marker='o', color='b', linewidth=0)
-    #
-    #     if fitLine:
-    #         fitres, model, ind_lines, vlin = self.mPSV_profile_fit(vel, Tb, lis=lis, lng=lng,
-    #                                                                thresh=thresh, sig=sig)
-    #         self.ax.plot(vel, model, color='r', )
-    #         for n in range(len(ind_lines)):
-    #             self.ax.plot(vel, ind_lines[n], color='g', linestyle='--')
-    #             dev = np.sum(np.abs(Tb - model)) / np.sum(Tb)
-    #         if (fitres['is_valid'] == True or \
-    #             (fitres['has_covariance'] == True and fitres[
-    #                 'has_valid_parameters'] == True and \
-    #              (fitres['has_reached_call_limit'] == False or fitres[
-    #                  'is_above_max_edm'] == False)) \
-    #                 ) \
-    #                 and dev < 1.:
-    #             print('fit succeeded')
-    #         else:
-    #             print('fit failed')
-    #             print(fitres)
-    #         print('integrated fractional model deviation', dev)
-    #
-    #     plt.show()
+    def line(self, l, b, vmin, vmax, vcuts=False, dcuts=False, plotFit=False, lineDtc=False,
+             lng=2, lis=1, sig=2.5, thresh=3., fitLine=False):
+
+        vel, Tb = self.getLineData(l, b, vmin, vmax)
+
+        self.ax = plt.subplot(111)
+        self.ax.plot(vel, Tb, linewidth=0, color='k', marker='o', markersize=3)
+        self.ax.set_xlabel('$V_\mathrm{LSR}$ (km s$^{-1}$)')
+        self.ax.set_ylabel('$T_\mathrm{B}$ (K)')
+
+        if vcuts:
+            for s, vrange in enumerate(vcuts):
+                lon = l
+                lat = b
+                vmin = eval(vrange[0])
+                vmax = eval(vrange[1])
+                plt.axvline(vmin, color='k')
+                plt.axvline(vmax, color='k')
+
+        if dcuts:
+            for bound in dcuts:
+                lon = l
+                lat = b
+                vlsr = lbd2vlsr(lon, lat, bound)
+                plt.axvline(vlsr, color='k')
+
+        if plotFit:
+            if self.fitres['available']:
+                vel, vfit, PV, Tfit, aic = self.getFitResults(l, b, vmin, vmax)
+                for klin in range(np.shape(PV)[1]):
+                    self.ax.plot(vel, PV[:, klin], color='g', linestyle='--')
+                self.ax.plot(vel, Tfit, color='r')
+                dev = np.sum(np.abs(Tb - Tfit)) / np.sum(Tb)
+                print('AIC', aic)
+                print('integrated fractional model deviation', dev)
+            else:
+                print("Fit results not available")
+
+        if lineDtc:
+            ilin, eps = epsDetect(Tb, lis=lis, lng=lng, sig=sig)
+            ilin = np.array(ilin)
+            eps = np.array(eps)
+            ilin = ilin[eps > thresh]
+            eps = eps[eps > thresh]
+            for ii in range(len(ilin)):
+                self.ax.plot(vel[ilin[ii]], eps[ii], marker='o', color='b', linewidth=0)
+
+        if fitLine:
+            fitres, model, ind_lines, vlin = self.mPSV_profile_fit(vel, Tb, lis=lis, lng=lng,
+                                                                   thresh=thresh, sig=sig)
+            self.ax.plot(vel, model, color='r', )
+            for n in range(len(ind_lines)):
+                self.ax.plot(vel, ind_lines[n], color='g', linestyle='--')
+                dev = np.sum(np.abs(Tb - model)) / np.sum(Tb)
+            if (fitres['is_valid'] == True or \
+                (fitres['has_covariance'] == True and fitres[
+                    'has_valid_parameters'] == True and \
+                 (fitres['has_reached_call_limit'] == False or fitres[
+                     'is_above_max_edm'] == False)) \
+                    ) \
+                    and dev < 1.:
+                print('fit succeeded')
+            else:
+                print('fit failed')
+                print(fitres)
+            print('integrated fractional model deviation', dev)
+
+        plt.show()
 
     def column(self, vel, Tb, Tbkg=2.66):
 
@@ -738,5 +738,85 @@ class gascube:
         plt.imshow(im, interpolation='none', origin='lower', extent=extent, aspect='auto',
                    norm=LogNorm(), cmap='jet')
         cbar = plt.colorbar(label="K deg")
+
+        plt.show()
+
+
+    def vdiagram_fit(self, lmin, lmax, bmin, bmax, vmin, vmax, integrate='latitude'):
+
+        # check if required region is covered by input file, otherwise modify boundaries
+        l1 = self.pix2coord(0, 'longitude')
+        l2 = self.pix2coord(self.naxis['longitude'] - 1, 'longitude')
+        ll = np.minimum(l1, l2)
+        lu = np.maximum(l1, l2)
+        lmin = np.maximum(lmin, ll)
+        lmax = np.minimum(lmax, lu)
+        b1 = self.pix2coord(0, 'latitude')
+        b2 = self.pix2coord(self.naxis['latitude'] - 1, 'latitude')
+        bl = np.minimum(b1, b2)
+        bu = np.maximum(b1, b2)
+        bmin = np.maximum(bmin, bl)
+        bmax = np.minimum(bmax, bu)
+        v1 = self.pix2coord(0, 'velocity')/self.vscale
+        v2 = self.pix2coord(self.naxis['velocity'] - 1, 'velocity')/self.vscale
+        vl = np.minimum(v1, v2)
+        vu = np.maximum(v1, v2)
+        vmin = np.maximum(vmin, vl)
+        vmax = np.minimum(vmax, vu)
+
+        # binning parameters
+        lbins = int((lmax - lmin) / abs(self.delta['longitude'])) + 1
+        bbins = int((bmax - bmin) / abs(self.delta['latitude'])) + 1
+        vbins = int((vmax - vmin) / abs(self.delta['velocity']/self.vscale)) + 1
+        ldir = self.delta['longitude'] / abs(self.delta['longitude'])
+        bdir = self.delta['latitude'] / abs(self.delta['latitude'])
+        vdir = self.delta['velocity'] / abs(self.delta['velocity'])
+
+        # create output array
+        if integrate == 'latitude':
+            im = np.zeros([vbins,lbins])
+        elif integrate == 'longitude':
+            im = np.zeros([bbins, vbins])
+
+        for ll in range(lbins):
+            for bb in range(bbins):
+                lpix = self.coord2pix(lmax, 'longitude') - ll * ldir
+                bpix = self.coord2pix(bmin, 'latitude') + bb * bdir
+                lon = self.pix2coord(lpix, 'longitude')
+                lat = self.pix2coord(bpix, 'latitude')
+                velf, vfit, PV, Tfit, aic = self.getFitResults(lon, lat, vmin, vmax)
+                for vv in range(vbins):
+                    vpix = self.coord2pix(self.vscale * vmin, 'velocity') + vv * vdir
+                    vel = self.pix2coord(vpix, 'velocity')/self.vscale
+                    for klin, vlin in enumerate(vfit):
+                        if np.abs(vlin - vel) <= np.abs(self.delta['velocity']/self.vscale) / 2:
+                            if integrate == 'latitude':
+                                im[vv,ll] += self.column(velf, PV[:, klin])
+                            elif integrate == 'longitude':
+                                im[bb,vv] += self.column(velf, PV[:, klin])
+                        else:
+                            pass
+
+
+        # create the figure
+        ax = plt.subplot(111)
+
+        # and set figure extent and axis labels
+        if integrate == 'latitude':
+            extent = (lmax, lmin, vmin, vmax)
+            ax.set_xlabel('$l$ (deg)')
+            ax.set_ylabel('V (km s$^{-1}$)')
+        if integrate == 'longitude':
+            extent = (vmin, vmax, bmin, bmax)
+            ax.set_xlabel('V (km s$^{-1}$)')
+            ax.set_ylabel('$b$ (deg)')
+
+        # display the map
+        plt.imshow(im,
+                   interpolation='none',
+                   origin='lower', extent=extent, aspect='auto',
+                   norm=LogNorm(vmin=1),
+                   cmap='jet')
+        cbar = plt.colorbar(label="N(H) (cm-2)")
 
         plt.show()
