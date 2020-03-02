@@ -417,7 +417,7 @@ class gascube:
             F.subplots_adjust(left=0.08, right=0.95, top=0.95, bottom=0.08)
 
             if vcuts:
-                nn = len(vcuts) + 1
+                nn = len(vcuts)
             elif dcuts:
                 nn = len(dcuts) + 1
 
