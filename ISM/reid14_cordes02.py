@@ -89,7 +89,7 @@ def arm_polar(s):
     elif s == 3:
         rr[(tt > np.deg2rad(290)) & (tt < np.deg2rad(395))] *= 1. -0.11 * np.cos(
             (tt[(tt > np.deg2rad(290)) & (tt < np.deg2rad(395))] - np.deg2rad(350.)) * 180. / 105.)
-    #rr *= R0/8.5  # Wainscoat 1992 uses Rsun=8.5, why don't I need to correct if I change this value?
+    rr *= R0/8.5  # Wainscoat 1992 uses Rsun=8.5, why don't I need to correct if I change this value?
     return rr, tt
 
 def arm_xy(s):

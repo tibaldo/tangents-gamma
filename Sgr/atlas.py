@@ -11,9 +11,9 @@ from matplotlib.patches import Circle
 
 comap = fits.open("/Users/ltibaldo/Fermi/ISM/CO/COGAL_deep_mom.fits")[0].data
 himap = fits.open("/Users/ltibaldo/Fermi/ISM/HI/HI4PI/CAR_E03.fits")[0].data
-atlasgal = open("/Users/ltibaldo/Fermi/tangents/images2/table3.dat").readlines()
+# atlasgal = open("/Users/ltibaldo/Fermi/tangents/images2/table3.dat").readlines()
 bessel = fits.getdata("/Users/ltibaldo/Fermi/tangents/images2/asu.fit", 1)
-dustmap = fits.getdata('/Users/ltibaldo/Fermi/ISM/dust/extinction_cubes/Marshall2006_3Dextmap.fits',0)
+dustmap = fits.getdata('/Users/ltibaldo/Fermi/ISM/dust/extinction_cubes/machete_june_2019.fits',0)
 
 ####color coding#########################################
 col=["#4C72B0", "#55A868", "#C44E52","#8172B2", "#CCB974"]
@@ -104,14 +104,14 @@ ax3.xaxis.set_ticks_position('both')
 ax3.yaxis.set_ticks_position('both')
 
 dustmap[np.isnan(dustmap) == True] = 0.
-for s in range(len(dustmap)-1,0,-1):
-    dustmap[s] = dustmap[s] - dustmap[s-1]
-dustmap = np.sum(dustmap[:,80:121,:],axis=1)#integrate -2 to 2
+# for s in range(len(dustmap)-1,0,-1):
+#     dustmap[s] = dustmap[s] - dustmap[s-1]
+dustmap = np.sum(dustmap,axis=1)#integrate latitude
 dustmap[dustmap<0]=0
 
-dust_plot = plt.imshow(np.log(dustmap), origin='lower', extent=[100, -100, 0., 15.],vmin=-1.5,vmax=0.5,cmap='gray_r')
+dust_plot = plt.imshow(np.log(dustmap), origin='lower', extent=[180, -180, 0., 20.],vmin=1,vmax=5,cmap='gray_r')
 ax3.set_aspect("auto", adjustable="box")
-ax3.xaxis.set_ticks(np.arange(100, -110, -10))
+ax3.xaxis.set_ticks(np.arange(180, -180, -10))
 
 # overlay spiral arm model
 for s in range(Narm):
@@ -221,14 +221,14 @@ ax0.plot([0,2*x],[R0,y2],linestyle='--',color='k')
 ax1.vlines([lmin,lmax],-157.3, 157.3,linestyle='--',color='k')
 ax2.vlines([lmin,lmax],-153.17, 153.17,linestyle='--',color='k')
 ax3.vlines([lmin,lmax],0, 15.,linestyle='--',color='k')
-lvals=np.linspace(lmin,lmax,200)
-for s, bound in enumerate(bounds):
-    circ = Circle((0,R0),bound,color=boundcolors[s], linewidth=1.5, linestyle='--',fill=False,zorder=3)
-    ax0.add_patch(circ)
-    vbound = lbd2vlsr(lvals,0,bound)
-    dbound = bound * np.ones(len(lvals))
-    ax1.plot(lvals,vbound,color=boundcolors[s], linewidth=1.5, linestyle='--')
-    ax2.plot(lvals, vbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
-    ax3.plot(lvals, dbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
+# lvals=np.linspace(lmin,lmax,200)
+# for s, bound in enumerate(bounds):
+#     circ = Circle((0,R0),bound,color=boundcolors[s], linewidth=1.5, linestyle='--',fill=False,zorder=3)
+#     ax0.add_patch(circ)
+#     vbound = lbd2vlsr(lvals,0,bound)
+#     dbound = bound * np.ones(len(lvals))
+#     ax1.plot(lvals,vbound,color=boundcolors[s], linewidth=1.5, linestyle='--')
+#     ax2.plot(lvals, vbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
+#     ax3.plot(lvals, dbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
 
 plt.show()

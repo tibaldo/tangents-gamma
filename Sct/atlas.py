@@ -9,10 +9,10 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from matplotlib.patches import Circle
 
-comap = fits.open("/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/COGAL_deep_mom.fits")[0].data # Change to the folder containing the files
-himaps = fits.open("/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/Sct/CAR_E02.fits")[0].data
-bessel = fits.getdata("/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/asu.fit", 1)
-dustmap = fits.getdata('/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/Dust.fits',0)
+comap = fits.open("/Users/ltibaldo/Fermi/ISM/CO/COGAL_deep_mom.fits")[0].data # Change to the folder containing the files
+himaps = fits.open("/Users/ltibaldo/Fermi/ISM/HI/HI4PI/CAR_E02.fits")[0].data
+bessel = fits.getdata("/Users/ltibaldo/Fermi/tangents/images2/asu.fit", 1)
+dustmap = fits.getdata('/Users/ltibaldo/Fermi/ISM/dust/extinction_cubes/machete_june_2019.fits',0)
 
 ####color coding#########################################
 col=["#4C72B0", "#55A868", "#C44E52","#8172B2", "#CCB974"]
@@ -107,14 +107,14 @@ ax3.xaxis.set_ticks_position('both')
 ax3.yaxis.set_ticks_position('both')
 
 dustmap[np.isnan(dustmap) == True] = 0.
-for s in range(len(dustmap)-1,0,-1):
-    dustmap[s] = dustmap[s] - dustmap[s-1]
-dustmap = np.sum(dustmap[:,72:193,:],axis=1) #integrate -2 to 2
+# for s in range(len(dustmap)-1,0,-1):
+#     dustmap[s] = dustmap[s] - dustmap[s-1]
+dustmap = np.sum(dustmap,axis=1)#integrate latitude
 dustmap[dustmap<0]=0
 
-dust_plot = plt.imshow(np.log(dustmap), origin='lower', extent=[153.17, -153.17, 0., 15.],vmin=-1.5,vmax=1.,cmap='gray_r')
+dust_plot = plt.imshow(np.log(dustmap), origin='lower', extent=[180, -180, 0., 20.],vmin=1,vmax=5,cmap='gray_r')
 ax3.set_aspect("auto", adjustable="box")
-ax3.xaxis.set_ticks(np.arange(100, -110, -10))
+ax3.xaxis.set_ticks(np.arange(180, -180, -10))
 
 
 # overlay spiral arm model
@@ -182,9 +182,9 @@ for obj in bessel:
         ax0.plot(x, y, marker='^', color=coldic[obj["Arm"]], alpha=0.7) # ignore that
     except:
         ax0.plot(x, y, marker='^', color='k', alpha=0.3) # Line to plot after getting lbd
-    if obj['Arm'] == 'Sgr' and l > 46.: # To ignore
-        print('SFR')
-        print(l,vlsr,dist)
+    # if obj['Arm'] == 'Sgr' and l > 46.: # To ignore
+    #     print('SFR')
+    #     print(l,vlsr,dist)
 
 #add boundaries for the study of Scutum tangent
 bounds=[1.2,4.,9.39,12.4,15.3] # radius of Circles around the Sun 4.8 9.5
@@ -206,14 +206,14 @@ for i in [0,1]:
     ax2.vlines([lmin,lmax],-153.17, 153.17,linestyle='--',color='k')
     ax3.vlines([lmin,lmax],0, 15.,linestyle='--',color='k')
 
-lvals=np.linspace(lmin,lmax,200)
-for s, bound in enumerate(bounds): # Creates Circles around Sun
-    circ = Circle((0,R0),bound,color=boundcolors[s], linewidth=1.5, linestyle='--',fill=False,zorder=3)
-    ax0.add_patch(circ)
-    vbound = lbd2vlsr(lvals,0,bound)
-    dbound = bound * np.ones(len(lvals))
-    ax1.plot(lvals,vbound,color=boundcolors[s], linewidth=1.5, linestyle='--')
-    ax2.plot(lvals, vbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
-    ax3.plot(lvals, dbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
+# lvals=np.linspace(lmin,lmax,200)
+# for s, bound in enumerate(bounds): # Creates Circles around Sun
+#     circ = Circle((0,R0),bound,color=boundcolors[s], linewidth=1.5, linestyle='--',fill=False,zorder=3)
+#     ax0.add_patch(circ)
+#     vbound = lbd2vlsr(lvals,0,bound)
+#     dbound = bound * np.ones(len(lvals))
+#     ax1.plot(lvals,vbound,color=boundcolors[s], linewidth=1.5, linestyle='--')
+#     ax2.plot(lvals, vbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
+#     ax3.plot(lvals, dbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
 
 plt.show()
