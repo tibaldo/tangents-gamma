@@ -7,3 +7,6 @@
 .idea/vcs.xml
 *.pyc
 ISM/.DS_Store
+.idea/codeStyles/codeStyleConfig.xml
+.idea/codeStyles/Project.xml
+.idea/encodings.xml

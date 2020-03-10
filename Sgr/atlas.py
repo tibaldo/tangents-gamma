@@ -1,7 +1,9 @@
 import sys
 sys.path.append('../ISM/')
 
-from reid14_cordes02 import *
+from MW_utils import *
+from reid14_rotation import rotcurve, R0, V0
+from ne2001_arms import arm_polar, Narm
 
 import matplotlib.pyplot as plt
 from astropy.io import fits
@@ -47,7 +49,7 @@ ax0.set_ylim(-20.,20.)
 
 # overlay spiral arm model
 for s in range(Narm):
-    x, y = arm_xy(s)
+    x, y = arm_xy(s,arm_polar)
     ax0.plot(x, y,linewidth=10,alpha=0.5,color=col[s])
 
 #CO
@@ -115,8 +117,8 @@ ax3.xaxis.set_ticks(np.arange(180, -180, -10))
 
 # overlay spiral arm model
 for s in range(Narm):
-    ll, vlsr = arm_lv(s)
-    ll, dd = arm_ld0(s)
+    ll, vlsr = arm_lv(s,R0, V0, arm_polar, rotcurve)
+    ll, dd = arm_ld0(s, R0, arm_polar)
     if s==2:
         ax1.plot(ll[ll>0],vlsr[ll>0],linewidth=10,color=col[s],alpha=0.5,label=lab[s])
         ax1.plot(ll[(ll<0) & (ll>-14)],vlsr[(ll<0) & (ll>-14)],linewidth=10,color=col[s],alpha=0.5)
@@ -198,7 +200,7 @@ for obj in bessel:
         ax1.plot(l, vlsr, marker='^', color='k', alpha=0.3)
         ax2.plot(l, vlsr, marker='^', color='k', alpha=0.3)
         ax3.plot(l, dist, marker='^', color='k', alpha=0.3)
-    x, y = lbd2xy(l,b,dist)
+    x, y = lbd2xy(l,b,dist,R0)
     try:
         ax0.plot(x, y, marker='^', color=coldic[obj["Arm"]], alpha=0.7)
     except:
@@ -212,23 +214,23 @@ lmin = 46.
 lmax = 54.
 bounds=[1.5,3.,7.,9,11.5]
 boundcolors = ['k','g','b','r','c']
-x,y = lbd2xy(lmin,0,R0)
+x,y = lbd2xy(lmin,0, R0,R0)
 y2 = R0 + 2*x*(y-R0)/x
 ax0.plot([0,2*x],[R0,y2],linestyle='--',color='k')
-x,y = lbd2xy(lmax,0,R0)
+x,y = lbd2xy(lmax,0, R0,R0)
 y2 = R0 + 2*x*(y-R0)/x
 ax0.plot([0,2*x],[R0,y2],linestyle='--',color='k')
 ax1.vlines([lmin,lmax],-157.3, 157.3,linestyle='--',color='k')
 ax2.vlines([lmin,lmax],-153.17, 153.17,linestyle='--',color='k')
 ax3.vlines([lmin,lmax],0, 15.,linestyle='--',color='k')
-# lvals=np.linspace(lmin,lmax,200)
-# for s, bound in enumerate(bounds):
-#     circ = Circle((0,R0),bound,color=boundcolors[s], linewidth=1.5, linestyle='--',fill=False,zorder=3)
-#     ax0.add_patch(circ)
-#     vbound = lbd2vlsr(lvals,0,bound)
-#     dbound = bound * np.ones(len(lvals))
-#     ax1.plot(lvals,vbound,color=boundcolors[s], linewidth=1.5, linestyle='--')
-#     ax2.plot(lvals, vbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
-#     ax3.plot(lvals, dbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
+lvals=np.linspace(lmin,lmax,200)
+for s, bound in enumerate(bounds):
+    circ = Circle((0,R0),bound,color=boundcolors[s], linewidth=1.5, linestyle='--',fill=False,zorder=3)
+    ax0.add_patch(circ)
+    vbound = lbd2vlsr(lvals,0,bound,R0,V0,rotcurve)
+    dbound = bound * np.ones(len(lvals))
+    ax1.plot(lvals,vbound,color=boundcolors[s], linewidth=1.5, linestyle='--')
+    ax2.plot(lvals, vbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
+    ax3.plot(lvals, dbound, color=boundcolors[s], linewidth=1.5, linestyle='--')
 
 plt.show()
