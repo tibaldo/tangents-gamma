@@ -30,6 +30,8 @@ ax2.vlines([lmin,lmax],-153.17, 153.17,linestyle='-',color='k')
 ax2.vlines([lmin-border,lmax+border],-153.17, 153.17,linestyle='--',color='k')
 ax3.vlines([lmin,lmax],0, 15.,linestyle='-',color='k')
 ax3.vlines([lmin-border,lmax+border],0, 15.,linestyle='--',color='k')
+ax4.vlines([lmin,lmax],0, 15.,linestyle='-',color='k')
+ax4.vlines([lmin-border,lmax+border],0, 15.,linestyle='--',color='k')
 
 # draw boundaries on CO map
 plt.figure(fig1.number)
@@ -79,6 +81,7 @@ for bound in bounds:
         else:
             plt.figure(fig3.number)
             ax3.plot(lon,d,linestyle=':',color='k')
+            ax4.plot(lon, d, linestyle=':', color='k')
             x, y = lbd2xy(lon,0,d,R0)
             plt.figure(fig0.number)
             ax0.plot(x, y, linestyle=':', color='k')

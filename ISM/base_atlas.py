@@ -34,6 +34,7 @@ def ld_linear(l,v):
 comap = fits.open("/Users/ltibaldo/Fermi/ISM/CO/COGAL_deep_mom.fits")[0].data
 himap = fits.open("/Users/ltibaldo/Fermi/ISM/HI/HI4PI/CAR_E03.fits")[0].data
 dustmap = fits.getdata('/Users/ltibaldo/Fermi/ISM/dust/extinction_cubes/machete_june_2019.fits',0)
+dustmap2 = fits.getdata('/Users/ltibaldo/Fermi/ISM/dust/extinction_cubes/stilism2019_lbdcube_firstquad_compressed.fits',1)
 
 #### read bessel SFR
 filename = '/Users/ltibaldo/Fermi/ISM/BeSSeL/v2.4.1_bundle/parallax_data.inp'
@@ -153,9 +154,30 @@ dustmap[np.isnan(dustmap) == True] = 0.
 dustmap = np.sum(dustmap,axis=1)#integrate latitude
 dustmap[dustmap<0]=0
 
-dust_plot = plt.imshow(np.log(dustmap), origin='lower', extent=[180, -180, 0., 20.],vmin=1,vmax=5,cmap='Spectral_r')
+dust_plot = ax3.imshow(np.log(dustmap), origin='lower', extent=[180, -180, 0., 20.],vmin=1,vmax=5,cmap='Spectral_r')
 ax3.set_aspect("auto", adjustable="box")
 ax3.xaxis.set_ticks(np.arange(180, -180, -10))
+
+#dust extinction 2
+fig4 = plt.figure("londist2", figsize=(8, 4))
+fig4.subplots_adjust(left=0.08, right=0.97, top=0.99, bottom=0.14)
+ax4 = plt.subplot(111)
+ax4.set_xlabel("Galactic longitude [$^\circ$]", fontsize=14, usetex=True)
+ax4.set_ylabel("distance [kpc]", fontsize=14, usetex=True)
+for tick in ax4.xaxis.get_major_ticks():
+    tick.label.set_fontsize(14)
+for tick in ax4.yaxis.get_major_ticks():
+    tick.label.set_fontsize(14)
+ax4.xaxis.set_ticks_position('both')
+ax4.yaxis.set_ticks_position('both')
+
+dustmap2[np.isnan(dustmap2) == True] = 0.
+dustmap2 = np.sum(dustmap2[:,260:341,:],axis=1)#integrate latitude
+dustmap2[dustmap2<0]=0
+
+dust_plot2 = ax4.imshow(np.log(dustmap2), origin='lower', extent=[90, 0, 0., 3.],cmap='Spectral_r')
+ax4.set_aspect("auto", adjustable="box")
+ax4.xaxis.set_ticks(np.arange(90, 0, -10))
 
 # # overlay spiral arm model
 for s in range(Narm):
@@ -168,6 +190,8 @@ for s in range(Narm):
         ax2.plot(ll[ll < -30], vlsr[ll < -30], color=col[s], linewidth=3, alpha=0.3)
         ax3.plot(ll[ll>-30], dd[ll>-30], color=col[s], linewidth=3, alpha=0.3)
         ax3.plot(ll[ll < -30], dd[ll < -30], color=col[s], linewidth=3, alpha=0.3)
+        ax4.plot(ll[ll>-30], dd[ll>-30], color=col[s], linewidth=3, alpha=0.3)
+        ax4.plot(ll[ll < -30], dd[ll < -30], color=col[s], linewidth=3, alpha=0.3)
     else:
         ax1.plot(ll[ll>0],vlsr[ll>0],color=col[s],linewidth=3,alpha=0.3)
         ax1.plot(ll[ll < 0], vlsr[ll < 0], color=col[s], linewidth=3, alpha=0.3)
@@ -175,6 +199,8 @@ for s in range(Narm):
         ax2.plot(ll[ll < 0], vlsr[ll < 0], color=col[s], linewidth=3, alpha=0.3)
         ax3.plot(ll[ll>0], dd[ll>0], color=col[s], linewidth=3, alpha=0.3)
         ax3.plot(ll[ll < 0], dd[ll < 0], color=col[s], linewidth=3, alpha=0.3)
+        ax4.plot(ll[ll>0], dd[ll>0], color=col[s], linewidth=3, alpha=0.3)
+        ax4.plot(ll[ll < 0], dd[ll < 0], color=col[s], linewidth=3, alpha=0.3)
 
 #overlay BeSSel high-mass SFR
 for obj in bessel:
@@ -202,6 +228,7 @@ for obj in bessel:
     else:
         size = 1.5
     ax3.plot(l, dist, marker='o', markersize=size, color=coldic[obj["arm"]], alpha=0.7)
+    ax4.plot(l, dist, marker='o', markersize=size, color=coldic[obj["arm"]], alpha=0.7)
     x, y = lbd2xy(l,obj['glat'],dist,R0)
     ax0.plot(x, y, marker='o', markersize=size, color=coldic[obj["arm"]], alpha=0.7)
 
@@ -213,3 +240,4 @@ for s, label in enumerate(labels):
 
 ax1.legend(handles=legend_elements)
 ax3.legend(handles=legend_elements)
+#ax4.legend(handles=legend_elements)
