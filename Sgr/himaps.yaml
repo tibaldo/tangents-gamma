@@ -1,49 +1,46 @@
 name_tag:
   0: 'HI4PIE03_'
-  1: 'VGPSM049_'
-  2: 'VGPSM053_'
+#  1: 'VGPSM049_'
+#  2: 'VGPSM053_'
 
 infile:
   0: '/Users/ltibaldo/Fermi/ISM/HI/HI4PI/CAR_E03.fits'
-  1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/MOS_049.Tb.fits'
-  2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/MOS_053.Tb.fits'
+#  1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/MOS_049.Tb.fits'
+#  2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/MOS_053.Tb.fits'
 
 fitres:
   0: '/Users/ltibaldo/Fermi/tangents/Quentin/CAR_E03_res.mat'
-  1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_049.Tb_res.mat'
-  2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_053.Tb_res.mat'
+#  1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_049.Tb_res.mat'
+#  2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_053.Tb_res.mat'
 
 fitdiag:
   0: '/Users/ltibaldo/Fermi/tangents/Quentin/CAR_E03_diag.mat'
-  1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_049.Tb_diag.mat'
-  2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_053.Tb_diag.mat'
+#  1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_049.Tb_diag.mat'
+#  2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_053.Tb_diag.mat'
 
-lmin: 42.
-lmax: 58.
-bmin: -8.
-bmax: 9.
+lmin: 43.
+lmax: 56.5
+bmin: -10.
+bmax: 10.
 vmin: -110.
 vmax: 150.
 
-target_res: 0.05
+# target_res: 0.05
 
 names:
   0: 'outer'
   1: 'loc-Per'
   2: 'ia'
   3: 'Sgr'
-  
-dcuts:
-  0: 12.
-  1: 1.5
-  2: 3.
 
-Ts: 140.
+cutfile: '/Users/ltibaldo/Software/GitHub/tangents-gamma/Sgr/Sgr_bound.npy'
+
+Ts: 150.
 
 useFit: True
 
 T_anomaly: -10.
 
-outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v8/'
+outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v10/'
 
-nthread: 4
+nthread: 1

@@ -33,7 +33,7 @@ class linmap_chi2:
 class dustmap_residuals:
     def __init__(self, dustmap, colname, inmaps, scale=1., errorname='None'):
         """
-        Constructor for class to create extinction residuals from extinction cube and set of
+        Constructor for class to create extinction residuals from dust map and set of
         gas maps for given distance range.
         :param dustmap: `string`
         FITS file with dust map

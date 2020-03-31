@@ -14,6 +14,6 @@ for s in range(len(config['infile'])):
                 config['bmin'], config['bmax'],
                 config['vmin'], config['vmax'],
                 list(config['names'].values()),
-                vcuts=list(config['vcuts'].values()),
+                cutfile= config['cutfile'],
                 saveMaps=True, useFit=config['useFit'],
                 outdir=config['outdir'])

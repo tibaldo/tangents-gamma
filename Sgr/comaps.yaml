@@ -9,19 +9,19 @@ fitdiag:
   
 lmin: 43.
 lmax: 56.5
-bmin: -5.
-bmax: 5.
+bmin: -10.
+bmax: 10.
 vmin: -169.
 vmax: 169.
 
 names:
-  0: 'ia'
+  0: 'outer'
+  1: 'loc-Per'
+  2: 'ia'
+  3: 'Sgr'
   
-vcuts:
-  0:
-    - '19.'
-    - '30.5'
+cutfile: '/Users/ltibaldo/Software/GitHub/tangents-gamma/Sgr/Sgr_bound.npy'
 
-useFit: False
+useFit: True
 
-outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/test_ia/'
+outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v10/'
