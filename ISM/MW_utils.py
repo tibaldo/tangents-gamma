@@ -24,6 +24,12 @@ def lbd2xy(l,b,d,R0):
     r = np.sqrt(R0**2+d0**2-2*R0*d0*np.cos(np.deg2rad(l)))
     x = d0*np.sin(np.deg2rad(l))
     y = np.sqrt(r**2-x**2)
+    # trick to multiply by +- 1 based on logical condition
+    # that works for both numbers and numpy arrays
+    b = d0 * np.cos(np.deg2rad(l)) <= R0
+    i = b.astype(int)
+    y *= 2 * i - 1
+    #
     return x, y
 
 #####

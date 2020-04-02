@@ -33,10 +33,11 @@ def ld_linear(l,v):
     rad, dist = lbvlsr2rd0(lon,0,vlsr,R0,V0,rotcurve)
     return lon, dist
 
-def make_atlas(lmin,lmax,border,nbounds,bfilename):
+def make_atlas(lmin,lmax,border,nbounds,bfilename,hifilename):
 
     comap = fits.open("/Users/ltibaldo/Fermi/ISM/CO/COGAL_deep_mom.fits")[0].data
-    himap = fits.open("/Users/ltibaldo/Fermi/ISM/HI/HI4PI/CAR_E03.fits")[0].data
+    hihdu = fits.open(hifilename)[0]
+    himap = hihdu.data
     dustmap = fits.getdata('/Users/ltibaldo/Fermi/ISM/dust/extinction_cubes/machete_june_2019.fits',0)
     dustmap2 = fits.getdata('/Users/ltibaldo/Fermi/ISM/dust/extinction_cubes/stilism2019_lbdcube_firstquad_compressed.fits',1)
 
@@ -138,7 +139,9 @@ def make_atlas(lmin,lmax,border,nbounds,bfilename):
     himap[np.isnan(himap) == True] = 0.
     himap = np.sum(himap[:,72:193,:], axis=1)
     himap[himap < 0.1] = 0.1
-    hi_plot = ax2.imshow(np.sqrt(himap[347:585, :]), cmap="Spectral_r", origin='lower', extent=[61.083, 39., -153.17, 153.17])
+    hi_lmax = hihdu.header['CRVAL1'] + hihdu.header['CDELT1'] * (1 - hihdu.header['CRPIX1'])
+    hi_lmin = hi_lmax + hihdu.header['CDELT1'] * hihdu.header['NAXIS1']
+    hi_plot = ax2.imshow(np.sqrt(himap[347:585, :]), cmap="Spectral_r", origin='lower', extent=[hi_lmax, hi_lmin, -153.17, 153.17])
     ax2.set_aspect("auto", adjustable="box")
 
     #dust extinction
@@ -314,9 +317,9 @@ def make_atlas(lmin,lmax,border,nbounds,bfilename):
                 pass
             else:
                 plt.figure(fig3.number)
-                ax3.plot(lon, d, linestyle=':', color='k')
-                ax4.plot(lon, d, linestyle=':', color='k')
-                x, y = lbd2xy(lon, 0, d, R0)
+                ax3.plot(lon[np.isnan(d) == False], d[np.isnan(d) == False], linestyle=':', color='k')
+                ax4.plot(lon[np.isnan(d) == False], d[np.isnan(d) == False], linestyle=':', color='k')
+                x, y = lbd2xy(lon[np.isnan(d) == False], 0, d[np.isnan(d) == False], R0)
                 plt.figure(fig0.number)
                 ax0.plot(x, y, linestyle=':', color='k')
 
