@@ -13,9 +13,9 @@ from astropy.io import fits
 # helper class to draw lines clicking on figures
 class LineDrawer(object):
     lines = []
-    def draw_line(self):
+    def draw_line(self,nin=2):
         ax = plt.gca()
-        xy = plt.ginput(2)
+        xy = plt.ginput(nin)
 
         x = [p[0] for p in xy]
         y = [p[1] for p in xy]
@@ -33,7 +33,7 @@ def ld_linear(l,v):
     rad, dist = lbvlsr2rd0(lon,0,vlsr,R0,V0,rotcurve)
     return lon, dist
 
-def make_atlas(lmin,lmax,border,nbounds,bfilename,hifilename):
+def make_atlas(lmin,lmax,border,nbounds,bfilename,hifilename,nin=2):
 
     comap = fits.open("/Users/ltibaldo/Fermi/ISM/CO/COGAL_deep_mom.fits")[0].data
     hihdu = fits.open(hifilename)[0]
@@ -138,6 +138,7 @@ def make_atlas(lmin,lmax,border,nbounds,bfilename,hifilename):
 
     himap[np.isnan(himap) == True] = 0.
     himap = np.sum(himap[:,72:193,:], axis=1)
+    #himap = np.sum(himap[:, 193:, :], axis=1)
     himap[himap < 0.1] = 0.1
     hi_lmax = hihdu.header['CRVAL1'] + hihdu.header['CDELT1'] * (1 - hihdu.header['CRPIX1'])
     hi_lmin = hi_lmax + hihdu.header['CDELT1'] * hihdu.header['NAXIS1']
@@ -295,7 +296,7 @@ def make_atlas(lmin,lmax,border,nbounds,bfilename,hifilename):
         plt.waitforbuttonpress()
         ld = LineDrawer()
         for s in range(nbounds):
-            ld.draw_line()
+            ld.draw_line(nin=nin)
         # save file
         bounds = []
         for line in ld.lines:

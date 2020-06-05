@@ -273,8 +273,8 @@ class gascube:
     #
     #     return fitres, model, ind_lines, v_lines
     #
-    def line(self, l, b, vmin, vmax, vcuts=False, dcuts=False, plotFit=False, lineDtc=False,
-             lng=2, lis=1, sig=2.5, thresh=3., fitLine=False):
+    def line(self, l, b, vmin, vmax, vcuts=False, dcuts=False, cutfile = False,
+             plotFit=False, lineDtc=False, lng=2, lis=1, sig=2.5, thresh=3., fitLine=False):
 
         vel, Tb = self.getLineData(l, b, vmin, vmax)
 
@@ -291,12 +291,21 @@ class gascube:
                 vmax = eval(vrange[1])
                 plt.axvline(vmin, color='k')
                 plt.axvline(vmax, color='k')
-
-        if dcuts:
+        elif dcuts:
             for bound in dcuts:
                 lon = l
                 lat = b
                 vlsr = lbd2vlsr(lon, lat, bound)
+                plt.axvline(vlsr, color='k')
+        elif cutfile:
+            cuts = np.load(cutfile)
+            for cut in cuts:
+                # make sure x-values are sorted
+                idx = np.argsort(cut[0])
+                cut[1] = cut[1][idx]
+                cut[0] = cut[0][idx]
+                # plot at line position
+                vlsr = np.interp(l, cut[0], cut[1])
                 plt.axvline(vlsr, color='k')
 
         if plotFit:

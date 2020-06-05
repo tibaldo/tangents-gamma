@@ -39,7 +39,7 @@ def create_maps(infile, Ts, fitres_files,
                 useFit=useFit,
                 outdir=outdir,
                 saveMaps=True, display=False)
-    # cube.find_anomalies(T_anomaly, anomaly_file)
+    cube.find_anomalies(T_anomaly, anomaly_file)
 
 
 lmin = config['lmin']
@@ -79,26 +79,26 @@ if nthread > 1:
     pool.close()
     pool.join()
 
-# target_res = config['target_res']
-#
-# if nthread > 1:
-#     pool = Pool(processes=min(len(dcuts)+1,nthread))
-#
-# for ireg in range(len(dcuts)+1):
-#     # merge maps
-#     filenames = [outdir + 'lbmap_' + name_tag[s] + names[ireg] + '.fits'
-#                  for s in range(len(config['infile']))]
-#     mergedfile = outdir + 'lbmap_merged_' + names[ireg] + '.fits'
-#     args = (filenames,mergedfile,
-#             target_res,
-#             lmin,lmax,bmin,bmax,vmin,vmax,
-#             dcuts,ireg)
-#     if nthread > 1:
-#         pool.apply_async(merge_maps, args)
-#     else:
-#         merge_maps(*args)
-#
-# if nthread > 1:
-#     pool.close()
-#     pool.join()
+target_res = config['target_res']
+
+if nthread > 1:
+    pool = Pool(processes=min(len(dcuts)+1,nthread))
+
+for ireg in range(len(dcuts)+1):
+    # merge maps
+    filenames = [outdir + 'lbmap_' + name_tag[s] + names[ireg] + '.fits'
+                 for s in range(len(config['infile']))]
+    mergedfile = outdir + 'lbmap_merged_' + names[ireg] + '.fits'
+    args = (filenames,mergedfile,
+            target_res,
+            lmin,lmax,bmin,bmax,vmin,vmax,
+            dcuts,ireg)
+    if nthread > 1:
+        pool.apply_async(merge_maps, args)
+    else:
+        merge_maps(*args)
+
+if nthread > 1:
+    pool.close()
+    pool.join()
 

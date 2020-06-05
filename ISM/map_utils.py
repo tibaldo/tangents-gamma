@@ -46,38 +46,46 @@ def merge_maps(maps, outmap, target_res, lmin, lmax, bmin, bmax,vmin,vmax,
     hdu.writeto(outmap)
 
 
-def mask_map(data, header, anomalies, dcuts, ireg, vmin, vmax):
-    # find min/max distance
-    dmin = False
-    dmax = False
-    if ireg - 1 >= 0:
-        try:
-            dmin = dcuts[ireg - 1]
-        except:
-            pass
-    else:
-        pass
-    try:
-        dmax = dcuts[ireg]
-    except:
-        pass
-
+def create_anomaly_mask(map, anomalies, vmin, vmax, ireg, mask_radius,
+                        vcuts=False, dcuts=False, cutfile = False,
+                        save = False):
     # read anomalies
     anomalies = np.genfromtxt(anomalies, delimiter=',')
-    # fix for now, get rid of it
-    anomalies[:, 2] /= 1.e3
 
     # find min/max velocity
-    if dmin:
-        vmin = lbd2vlsr(anomalies[:, 0], anomalies[:, 1], [dmin] * len(anomalies))
+    # start with overall boundaries
+    vmin = np.array([vmin] * len(anomalies))
+    vmax = np.array([vmax] * len(anomalies))
+    if vcuts:
+        if ireg > 0:
+            vmin = np.array([vcuts[ireg][0]] * len(anomalies))
+        if ireg < len(vcuts) - 1:
+            vmax = np.array([vcuts[ireg][1]] * len(anomalies))
+    elif dcuts:
+        if ireg > 0:
+            dmin = dcuts[ireg-1]
+            vmin = lbd2vlsr(anomalies[:, 0], anomalies[:, 1], [dmin] * len(anomalies))
+        if ireg < len(dcuts):
+            dmax = dcuts[ireg]
+            vmax = lbd2vlsr(anomalies[:, 0], anomalies[:, 1], [dmax] * len(anomalies))
+    elif cutfile:
+        cuts = np.load(cutfile)
+        # make sure x-values are sorted
+        for cut in cuts:
+            idx = np.argsort(cut[0])
+            cut[1] = cut[1][idx]
+            cut[0] = cut[0][idx]
+        if ireg > 0:
+            cut = cuts[ireg-1]
+            vmin = np.interp(anomalies[:, 0],cut[0],cut[1])
+        if ireg < len(dcuts):
+            cut = cuts[ireg ]
+            vmax = np.interp(anomalies[:, 0], cut[0], cut[1])
     else:
-        vmin = np.array([vmin] * len(anomalies))
-    if dmax:
-        vmax = lbd2vlsr(anomalies[:, 0], anomalies[:, 1], [dmax] * len(anomalies))
-    else:
-        vmax = np.array([vmax] * len(anomalies))
+        # use overall velocity range
+        pass
 
-    # filter anomalies that are irrelevant
+    # filter anomalies that are irrelevant (outside velocity range)
     anomalies = anomalies[(anomalies[:, 2] >= vmin) & (anomalies[:, 2] <= vmax)]
 
     # reduce number of anomaly positions by eliminating duplicates
@@ -88,6 +96,7 @@ def mask_map(data, header, anomalies, dcuts, ireg, vmin, vmax):
     an_c = SkyCoord(anomalies[:, 0], anomalies[:, 1], frame="galactic", unit="deg")
 
     # build mesh grid of input map pixel coordinates
+    header = fits.getheader(map)
     w = wcs.WCS(header)
     x = np.arange(header['NAXIS1'])
     y = np.arange(header['NAXIS2'])
@@ -101,11 +110,9 @@ def mask_map(data, header, anomalies, dcuts, ireg, vmin, vmax):
     dist = np.array(dist)
     dist = dist.min(axis=0)
 
-    mask = np.ones(np.shape(data))
-    min_sep = np.maximum(np.abs(header['CDELT1']),np.abs(header['CDELT2']))
-    min_sep *= np.sqrt(2)/2
-    mask[dist < min_sep] = 0.
+    mask[dist < mask_radius] = 1.
 
-    data *= mask
+    if save:
+
 
     return data

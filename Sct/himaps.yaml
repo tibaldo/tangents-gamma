@@ -1,32 +1,48 @@
+name_tag:
+  0: 'HI4PIE02_'
+  1: 'VGPS029_'
+  2: 'VGPS033_'
+
 infile:
-  0: '/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/Sct/CAR_E02.fits'
+  0: '/Users/ltibaldo/Fermi/ISM/HI/HI4PI/CAR_E02.fits'
+  1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/MOS_029.Tb.fits'
+  2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/MOS_033.Tb.fits'
 
 fitres:
-  0: '/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/Quentin/Sct/CAR_E02_res.mat'
+  0: '/Users/ltibaldo/Fermi/tangents/Quentin/CAR_E02_res.mat'
+  1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_029.Tb_res.mat'
+  2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_033.Tb_res.mat'
+
 
 fitdiag:
-  0: '/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/Quentin/Sct/CAR_E02_diag.mat'
+  0: '/Users/ltibaldo/Fermi/tangents/Quentin/CAR_E02_diag.mat'
+  1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_029.Tb_diag.mat'
+  2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_033.Tb_diag.mat'
+
 
 lmin: 23.
-lmax: 38.
-bmin: -9.
-bmax: 9.
-vmin: -153.17
+lmax: 38
+bmin: -10.
+bmax: 10.
+vmin: -113.59
 vmax: 153.17
 
 names:
-  0: 'Outer'
-  1: 'loc-inter'
-  2: 'Sgr-Perseus'
-  3: 'tanSct'
+  0: 'outer'
+  1: 'local'
+  2: 'Sgr-Per'
+  3: 'Sct'
 
-dcuts: # two separation for the integration. Careful velocity ambiguity. 2 Cuts define 3 zones.
-  0: 15.3 # Yellow Circle
-  1: 1.2 # Black Circle
-  2: 9.39 # Blue Circle
+cutfile: '/Users/ltibaldo/Software/GitHub/tangents-gamma/Sct/Sct_bound.npy'
 
-Ts: 140
+Ts: 150.
 
 useFit: True
 
-outdir: '/home/timothy/Desktop/Data/Gasmaps/Sct/HI/' # Don't forget to create the directory
+T_anomaly: -10.
+
+target_res: 0.005
+
+outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/HI/v2/'
+
+nthread: 1

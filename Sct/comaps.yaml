@@ -1,30 +1,27 @@
 infile:
-  0: '/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/COGAL_moment.fits'
+  0: '/Users/ltibaldo/Fermi/ISM/CO/COGAL_moment.fits.gz'
 
 fitres:
-  0: '/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/Quentin/COGAL_all_interp_res_mod.npz'
+  0: '/Users/ltibaldo/Fermi/tangents/Quentin/COGAL_all_interp_res_mod.npz'
 
 fitdiag:
-  0: '/home/timothy/Desktop/Tangents_Gamma/Data/Dataset/Quentin/COGAL_all_interp_diag_mod.npz'
+  0: '/Users/ltibaldo/Fermi/tangents/Quentin/COGAL_all_interp_diag_mod.npz'
 
 lmin: 23.
-lmax: 38.
-bmin: -9.
-bmax: 9.
-vmin: -153.17
-vmax: 153.17
+lmax: 38
+bmin: -10.
+bmax: 10.
+vmin: -169.
+vmax: 169.
 
 names:
-  0: 'Outer'
-  1: 'loc-inter'
-  2: 'Sgr-Perseus'
-  3: 'tanSct'
+  0: 'outer'
+  1: 'local'
+  2: 'Sgr-Per'
+  3: 'Sct'
 
-dcuts: # two separation for the integration. Careful velocity ambiguity. 2 Cuts define 3 zones.
-  0: 15.3 # Yellow Circle
-  1: 1.2 # Black Circle
-  2: 9.39 # Blue Circle
+cutfile: '/Users/ltibaldo/Software/GitHub/tangents-gamma/Sct/Sct_bound.npy'
 
-useFit: False
+useFit: True
 
-outdir: '/home/timothy/Desktop/Data/Gasmaps/Sct/CO/' # Don't forget to create the directory
+outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/CO/v1/'

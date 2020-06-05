@@ -10,4 +10,4 @@ nbounds = 3
 bfilename = 'Sct_bound.npy'
 hifilename = "/Users/ltibaldo/Fermi/ISM/HI/HI4PI/CAR_E02.fits"
 
-make_atlas(lmin,lmax,border,nbounds,bfilename,hifilename)
+make_atlas(lmin,lmax,border,nbounds,bfilename,hifilename,nin=3)
