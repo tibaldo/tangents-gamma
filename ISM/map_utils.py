@@ -7,8 +7,7 @@ from reid14_cordes02 import lbd2vlsr
 from reproject import reproject_exact, reproject_interp
 
 
-def merge_maps(maps, outmap, target_res, lmin, lmax, bmin, bmax,vmin,vmax,
-               dcuts,ireg):
+def merge_maps(maps, outmap, target_res, lmin, lmax, bmin, bmax):
     # create output hdu
     # determine map properties
     nx = int((lmax - lmin) / target_res)
@@ -30,25 +29,22 @@ def merge_maps(maps, outmap, target_res, lmin, lmax, bmin, bmax,vmin,vmax,
     hdu = fits.PrimaryHDU(map_data, header=header)
 
     # reproject input maps onto output map
-    reprojected_maps = []
+    # and fill output map with input giving precedence to maps at the end of the list
     for map in maps:
         # reproject
         array, footprint = reproject_exact(fits.open(map)[0], hdu.header)
-        # mask pixels affected by anomalies
-        array = mask_map(array,hdu.header,dcuts,ireg,vmin,vmax)
-        reprojected_maps.append(array)
-
-    # fill output map with input giving precedence to maps at the end of the list
-    for map in reprojected_maps:
-        hdu.data[map > 0] = map[map > 0]
+        hdu.data[footprint == 1] = array[footprint == 1]
 
     # write new file
     hdu.writeto(outmap)
 
 
-def create_anomaly_mask(map, anomalies, vmin, vmax, ireg, mask_radius,
+def create_anomaly_mask(header, anomalies, vmin, vmax, ireg, mask_radius,
                         vcuts=False, dcuts=False, cutfile = False,
-                        save = False):
+                        save = False, outfilename='mask.fits'):
+
+    # mask will be one in pixels to mask, 0 otherwise
+
     # read anomalies
     anomalies = np.genfromtxt(anomalies, delimiter=',')
 
@@ -79,7 +75,7 @@ def create_anomaly_mask(map, anomalies, vmin, vmax, ireg, mask_radius,
             cut = cuts[ireg-1]
             vmin = np.interp(anomalies[:, 0],cut[0],cut[1])
         if ireg < len(dcuts):
-            cut = cuts[ireg ]
+            cut = cuts[ireg]
             vmax = np.interp(anomalies[:, 0], cut[0], cut[1])
     else:
         # use overall velocity range
@@ -96,7 +92,6 @@ def create_anomaly_mask(map, anomalies, vmin, vmax, ireg, mask_radius,
     an_c = SkyCoord(anomalies[:, 0], anomalies[:, 1], frame="galactic", unit="deg")
 
     # build mesh grid of input map pixel coordinates
-    header = fits.getheader(map)
     w = wcs.WCS(header)
     x = np.arange(header['NAXIS1'])
     y = np.arange(header['NAXIS2'])
@@ -110,9 +105,12 @@ def create_anomaly_mask(map, anomalies, vmin, vmax, ireg, mask_radius,
     dist = np.array(dist)
     dist = dist.min(axis=0)
 
+    mask = np.zeros(np.shape(lon))
     mask[dist < mask_radius] = 1.
 
     if save:
-
+        hdu = fits.PrimaryHDU(mask,header)
+        hdu.header['RECORD'] = 'Anomaly mask with radius {} deg'.format(radius)
+        hdu.writeto(outfilename)
 
     return data

@@ -1,5 +1,6 @@
 import sys
 import yaml
+import numpy as np
 from gascube import gascube
 from map_utils import *
 from multiprocessing import Pool
@@ -54,45 +55,48 @@ useFit = config['useFit']
 outdir = config['outdir']
 T_anomaly = config['T_anomaly']
 
-if nthread > 1:
-    pool = Pool(processes=min(len(config['infile']),nthread))
+# if nthread > 1:
+#     pool = Pool(processes=min(len(config['infile']),nthread))
 
-for s in range(len(config['infile'])):
-    try:
-        fitres_files = [config['fitres'][s], config['fitdiag'][s]]
-    except:
-        fitres_files = [None, None]
-    infile = config['infile'][s]
-    anomaly_file = outdir + '/{}anomalies.dat'.format(name_tag[s])
-    args = (infile, Ts, fitres_files,
-            lmin, lmax, bmin, bmax, vmin, vmax,
-            names, cutfile, name_tag[s],
-            useFit,
-            outdir,
-            T_anomaly, anomaly_file)
-    if nthread > 1:
-        pool.apply_async(create_maps, args)
-    else:
-        create_maps(*args)
-
-if nthread > 1:
-    pool.close()
-    pool.join()
+# for s in range(len(config['infile'])):
+#     try:
+#         fitres_files = [config['fitres'][s], config['fitdiag'][s]]
+#     except:
+#         fitres_files = [None, None]
+#     infile = config['infile'][s]
+#     anomaly_file = outdir + '/{}anomalies.dat'.format(name_tag[s])
+#     args = (infile, Ts, fitres_files,
+#             lmin, lmax, bmin, bmax, vmin, vmax,
+#             names, cutfile, name_tag[s],
+#             useFit,
+#             outdir,
+#             T_anomaly, anomaly_file)
+#     if nthread > 1:
+#         pool.apply_async(create_maps, args)
+#     else:
+#         create_maps(*args)
+#
+# if nthread > 1:
+#     pool.close()
+#     pool.join()
 
 target_res = config['target_res']
 
-if nthread > 1:
-    pool = Pool(processes=min(len(dcuts)+1,nthread))
+# determine the number of maps
+cuts = np.load(cutfile)
+nmaps = len(cuts) + 1
 
-for ireg in range(len(dcuts)+1):
+if nthread > 1:
+    pool = Pool(processes=min(nmaps,nthread))
+
+for ireg in range(nmaps):
     # merge maps
     filenames = [outdir + 'lbmap_' + name_tag[s] + names[ireg] + '.fits'
                  for s in range(len(config['infile']))]
     mergedfile = outdir + 'lbmap_merged_' + names[ireg] + '.fits'
     args = (filenames,mergedfile,
             target_res,
-            lmin,lmax,bmin,bmax,vmin,vmax,
-            dcuts,ireg)
+            lmin,lmax,bmin,bmax)
     if nthread > 1:
         pool.apply_async(merge_maps, args)
     else:
