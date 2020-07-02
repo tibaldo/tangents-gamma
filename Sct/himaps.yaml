@@ -19,13 +19,17 @@ fitdiag:
   1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_029.Tb_diag.mat'
   2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_033.Tb_diag.mat'
 
+rebin:
+  0: False
+  1: False
+  2: False
 
 lmin: 23.
 lmax: 38
 bmin: -10.
 bmax: 10.
-vmin: -113.59
-vmax: 153.17
+vmin: -67.
+vmax: 147.
 
 names:
   0: 'outer'
@@ -40,6 +44,10 @@ Ts: 150.
 useFit: True
 
 T_anomaly: -10.
+
+border: 3
+
+inpaint: True
 
 target_res: 0.005
 

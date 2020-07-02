@@ -1,31 +1,44 @@
 name_tag:
   0: 'HI4PIE03_'
-#  1: 'VGPSM049_'
-#  2: 'VGPSM053_'
+  1: 'GALFASgr00_'
+  2: 'GALFASgr01_'
+  3: 'GALFASgr02_'
+  4: 'GALFASgr03_'
+  5: 'GALFASgr04_'
 
 infile:
   0: '/Users/ltibaldo/Fermi/ISM/HI/HI4PI/CAR_E03.fits'
-#  1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/MOS_049.Tb.fits'
-#  2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/MOS_053.Tb.fits'
+  1: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/Sgr_GAL_cube00.fits'
+  2: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/Sgr_GAL_cube01.fits'
+  3: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/Sgr_GAL_cube02.fits'
+  4: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/Sgr_GAL_cube03.fits'
+  5: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/Sgr_GAL_cube04.fits'
+
 
 fitres:
   0: '/Users/ltibaldo/Fermi/tangents/Quentin/CAR_E03_res.mat'
-#  1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_049.Tb_res.mat'
-#  2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_053.Tb_res.mat'
+  1: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/res/Sgr_GAL_cube00_res.mat'
+  2: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/res/Sgr_GAL_cube01_res.mat'
+  3: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/res/Sgr_GAL_cube02_res.mat'
+  4: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/res/Sgr_GAL_cube03_res.mat'
+  5: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/res/Sgr_GAL_cube04_res.mat'
+
 
 fitdiag:
   0: '/Users/ltibaldo/Fermi/tangents/Quentin/CAR_E03_diag.mat'
-#  1: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_049.Tb_diag.mat'
-#  2: '/Users/ltibaldo/Fermi/ISM/HI/VGPS/res/MOS_053.Tb_diag.mat'
+  1: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/res/Sgr_GAL_cube00_diag.mat'
+  2: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/res/Sgr_GAL_cube01_diag.mat'
+  3: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/res/Sgr_GAL_cube02_diag.mat'
+  4: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/res/Sgr_GAL_cube03_diag.mat'
+  5: '/Users/ltibaldo/Fermi/ISM/HI/GALFA/res/Sgr_GAL_cube04_diag.mat'
+
 
 lmin: 43.
 lmax: 56.5
 bmin: -10.
 bmax: 10.
-vmin: -110.
-vmax: 150.
-
-# target_res: 0.05
+vmin: -100.
+vmax: 100.
 
 names:
   0: 'outer'
@@ -39,8 +52,14 @@ Ts: 150.
 
 useFit: True
 
-T_anomaly: -10.
+T_anomaly: -8.
 
-outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v10/'
+border: 3
+
+inpaint: True
+
+target_res: 0.03
+
+outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v11/'
 
 nthread: 1

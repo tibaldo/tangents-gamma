@@ -1,33 +1,44 @@
-infile: '/Users/ltibaldo/Fermi/ISM/dust/Planck/R2.01/COM_CompMap_Dust-GNILC-Model-Opacity_2048_R2.01.fits'
+infile: '/Users/ltibaldo/Fermi/ISM/dust/Planck/Premise2019/tauNoMaskNoThresh_CAR_rebin.fits'
 
 scale: 1000000.
 
-colname: TAU353
+mapname: 0
 
-errorname: ERR_TAU
+errorname: None
+error_mode: MODEL
+error_frac: 0.07876
+
+HPX: False
 
 gasmaps:
   0:
-      co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v5/lbmap_loc-out.fits'
-      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v6/lbmap_loc-out.fits'
+      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v11/lbmap_merged_outer.fits'
   1:
-      co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v5/lbmap_ia.fits'
-      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v6/lbmap_ia.fits'
+      co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v10/lbmap_loc-Per.fits'
+      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v11/lbmap_merged_loc-Per.fits'
   2:
-      co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v5/lbmap_Sgr.fits'
-      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v6/lbmap_Sgr.fits'
+      co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v10/lbmap_ia.fits'
+      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v11/lbmap_merged_ia.fits'
+  3:
+      co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/CO/v10/lbmap_Sgr.fits'
+      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/HI/v11/lbmap_merged_Sgr.fits'
 
-lmin: 42.
-lmax: 58.
-bmin: -9.
-bmax: 9.
-pixsize: 0.1
+lmin: 43.
+lmax: 56.5
+bmin: -10.
+bmax: 10.
+pixsize: 0.03
 
-mask: 'lon > 44. and lon < 56. and lat > -5.5 and lat < 6.5 and not ((lon-49.4)**2+(lat+0.3)**2)<0.35**2'
+mask: 'lon > 46. and lon < 53.5 and lat > -7. and lat < 7.'
+
+max_iter: 100
+smooth_radius: 4
+threshold: 2
 
 names:
-  0: 'loc-out'
-  1: 'ia'
-  2: 'Sgr'
+  0: 'outer'
+  1: 'loc-Per'
+  2: 'ia'
+  3: 'Sgr'
 
-outdir: '/Users/ltibaldo/tmp/'
+outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sgr/dust/v11red/'
