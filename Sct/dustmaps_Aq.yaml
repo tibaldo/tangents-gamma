@@ -6,22 +6,22 @@ mapname: 0
 
 errorname: None
 error_mode: MODEL
-error_frac: 0.064776
+error_frac: 0.10
 
 HPX: False
 
 gasmaps:
   0:
-      co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/CO/v1/lbmap_outer.fits'
-      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/HI/v2/lbmap_merged_rebin_outer.fits'
-  1:
+#      co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/CO/v1/lbmap_outer.fits'
+#      hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/HI/v2/lbmap_merged_rebin_outer.fits'
+  0:
       co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/CO/v1/lbmap_local.fits'
       hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/HI/v2/lbmap_merged_rebin_local.fits'
-  2:
+  1:
       co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/CO/v1/lbmap_Sgr-Per.fits'
       hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/HI/v2/lbmap_merged_rebin_Sgr-Per.fits'
-  3:
-      co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/CO/v1/lbmap_Sct.fits'
+  2:
+#      co: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/CO/v1/lbmap_Sct.fits'
       hi: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/HI/v2/lbmap_merged_rebin_Sct.fits'
 
 lmin: 23.
@@ -30,16 +30,16 @@ bmin: -10.
 bmax: 10.
 pixsize: 0.03
 
-mask: 'lon > 26. and lon < 35 and lat < 2. and lat > -2.'
+mask: 'lon > 26. and lon < 35 and lat > 2.5'
 
 max_iter: 100
 smooth_radius: 4
 threshold: 2
 
 names:
-  0: 'outer'
-  1: 'local'
-  2: 'Sgr-Per'
-  3: 'Sct'
+#  0: 'outer'
+  0: 'local'
+  1: 'Sgr-Per'
+  2: 'Sct'
 
-outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/dust/v2planered/'
+outdir: '/Users/ltibaldo/Fermi/tangents/gasmaps/Sct/dust/v2Aq/'
