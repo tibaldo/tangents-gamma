@@ -10,6 +10,7 @@ from pseudoVoigt import pseudoVoigt  # Quentin's version
 from reid19_rotation import rotcurve, R0, V0
 from MW_utils import lbd2vlsr
 from scipy.io import loadmat
+import pdb
 
 
 def add_inner_title(ax, title, loc, size=None, **kwargs):
@@ -60,14 +61,21 @@ class gascube:
                 'CTYPE' + str(i + 1)) == 'VELO-LSRK' or self.header.get(
                 'CTYPE' + str(i + 1)) == 'VEL' or self.header.get(
                 'CTYPE' + str(i + 1)) == 'VRAD'):
+                # initialise velocity unit
+                self.vscale = 1.
                 self.atlas['velocity'] = i + 1
                 self.refpix['velocity'] = self.header.get(
                     'CRPIX' + str(i + 1)) - 1
                 self.refval['velocity'] = self.header.get('CRVAL' + str(i + 1))
                 self.delta['velocity'] = self.header.get('CDELT' + str(i + 1))
                 self.naxis['velocity'] = self.header.get('NAXIS' + str(i + 1))
-                # store velocity unit
-                self.vscale = 1.
+                # check if velocity unit is stored in comment
+                if 'M/S' in self.header.comments['CDELT' + str(i + 1)]:
+                    self.vscale = 1.e3
+                if 'KM/S' in self.header.comments['CDELT' + str(i + 1)]:
+                    self.vscale = 1.
+                # check if velocity unit is defined by dedicated key
+                # key takes precedence over comment
                 try:
                     u = self.header.get('CUNIT' + str(i + 1))
                     if u == 'M/S' or u == 'm/s' or u == 'm s-1':
@@ -545,8 +553,9 @@ class gascube:
         jmax = self.coord2pix(bmax, 'latitude')
         kmin = self.coord2pix(vmin * self.vscale, 'velocity')
         kmax = self.coord2pix(vmax * self.vscale, 'velocity')
-        # establish sense of increasing longitude
+        # establish sense of increasing longitude and velocity
         ldir = self.delta['longitude'] / abs(self.delta['longitude'])
+        vdir = self.delta['velocity'] / abs(self.delta['velocity'])
 
         # set boundaries according to axes order and orientation
         pixmin = [0, 0, 0]
@@ -559,15 +568,28 @@ class gascube:
             pixmax[self.atlas['longitude'] - 1] = imin
         pixmin[self.atlas['latitude'] - 1] = jmin
         pixmax[self.atlas['latitude'] - 1] = jmax
-        pixmin[self.atlas['velocity'] - 1] = kmin
-        pixmax[self.atlas['velocity'] - 1] = kmax
+        if vdir > 0:
+            pixmin[self.atlas['velocity'] - 1] = kmin
+            pixmax[self.atlas['velocity'] - 1] = kmax
+        else:
+            pixmin[self.atlas['velocity'] - 1] = kmax
+            pixmax[self.atlas['velocity'] - 1] = kmin
         im = self.data[pixmin[2]:pixmax[2], pixmin[1]:pixmax[1], pixmin[0]:pixmax[0]]
 
         # if we integrate over latitude make sure longitude increases right to left
         if integrate == 'latitude' and ldir > 0:
             im = np.flip(im, axis=(3 - self.atlas['longitude']))
+        if vdir < 0:
+            im = np.flip(im, axis=(3 - self.atlas['velocity']))
+        # always make sure velocity increases bottom to top
         # integrate over appropriate axis
         im = np.sum(im, axis=(3 - self.atlas[integrate]))
+
+        # multiply by Delta to obtain K deg
+        if integrate == 'latitude':
+            im *= np.abs(self.delta['latitude'])
+        elif integrate == 'longitude':
+            im *= np.abs(self.delta['longitude'])
 
         # create the figure
         ax = plt.subplot(111)
@@ -580,7 +602,7 @@ class gascube:
             extent = (lmax, lmin, vmin, vmax)
             ax.set_xlabel('$l$ (deg)')
             ax.set_ylabel('V (km s$^{-1}$)')
-        if integrate == 'longitude':
+        elif integrate == 'longitude':
             if self.atlas['velocity'] > self.atlas['latitude']:
                 im = im.transpose()
             extent = (vmin, vmax, bmin, bmax)
@@ -589,7 +611,7 @@ class gascube:
 
         # display the map
         plt.imshow(im, interpolation='none', origin='lower', extent=extent, aspect='auto',
-                   norm=LogNorm(), cmap='jet')
+                   norm=LogNorm(vmin=2*np.abs(self.delta['latitude'])), cmap='jet')
         cbar = plt.colorbar(label="K deg")
 
         plt.show()
@@ -632,6 +654,7 @@ class gascube:
             im = np.zeros([bbins, vbins])
 
         for ll in range(lbins):
+            print(ll,'of',lbins)
             for bb in range(bbins):
                 lpix = self.coord2pix(lmax, 'longitude') - ll * ldir
                 bpix = self.coord2pix(bmin, 'latitude') + bb * bdir
@@ -642,7 +665,9 @@ class gascube:
                     vpix = self.coord2pix(self.vscale * vmin, 'velocity') + vv * vdir
                     vel = self.pix2coord(vpix, 'velocity')/self.vscale
                     for klin, vlin in enumerate(vfit):
-                        if np.abs(vlin - vel) <= np.abs(self.delta['velocity']/self.vscale) / 2:
+                        # check if line velocity falls within bin and that there is valid a fitted profile
+                        if np.abs(vlin - vel) <= np.abs(self.delta['velocity']/self.vscale) / 2 and \
+                                klin < len(PV[0,:]):
                             if integrate == 'latitude':
                                 im[vv,ll] += self.column(velf, PV[:, klin])
                             elif integrate == 'longitude':
@@ -650,6 +675,13 @@ class gascube:
                         else:
                             pass
 
+        print('done')
+
+        # multiply by Delta to obtain K deg
+        if integrate == 'latitude':
+            im *= np.abs(self.delta['latitude'])
+        elif integrate == 'longitude':
+            im *= np.abs(self.delta['longitude'])
 
         # create the figure
         ax = plt.subplot(111)
@@ -668,8 +700,8 @@ class gascube:
         plt.imshow(im,
                    interpolation='none',
                    origin='lower', extent=extent, aspect='auto',
-                   norm=LogNorm(vmin=1),
+                   norm=LogNorm(vmin=2*np.abs(self.delta['latitude'])),
                    cmap='jet')
-        cbar = plt.colorbar(label="N(H) (cm-2)")
+        cbar = plt.colorbar(label="K deg")
 
         plt.show()
