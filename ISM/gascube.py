@@ -677,12 +677,6 @@ class gascube:
 
         print('done')
 
-        # multiply by Delta to obtain K deg
-        if integrate == 'latitude':
-            im *= np.abs(self.delta['latitude'])
-        elif integrate == 'longitude':
-            im *= np.abs(self.delta['longitude'])
-
         # create the figure
         ax = plt.subplot(111)
 
@@ -700,8 +694,8 @@ class gascube:
         plt.imshow(im,
                    interpolation='none',
                    origin='lower', extent=extent, aspect='auto',
-                   norm=LogNorm(vmin=2*np.abs(self.delta['latitude'])),
+                   norm=LogNorm(vmin=1),
                    cmap='jet')
-        cbar = plt.colorbar(label="K deg")
+        cbar = plt.colorbar(label="N(H) 10^20 cm^-2")
 
         plt.show()
