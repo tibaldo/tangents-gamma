@@ -699,3 +699,76 @@ class gascube:
         cbar = plt.colorbar(label="N(H) 10^20 cm^-2")
 
         plt.show()
+
+    def weightedv_maps(self, lmin, lmax, bmin, bmax, vmin, vmax, threshold=3.):
+
+        # check if required region is covered by input file, otherwise modify boundaries
+        l1 = self.pix2coord(0, 'longitude')
+        l2 = self.pix2coord(self.naxis['longitude'] - 1, 'longitude')
+        ll = np.minimum(l1, l2)
+        lu = np.maximum(l1, l2)
+        lmin = np.maximum(lmin, ll)
+        lmax = np.minimum(lmax, lu)
+        b1 = self.pix2coord(0, 'latitude')
+        b2 = self.pix2coord(self.naxis['latitude'] - 1, 'latitude')
+        bl = np.minimum(b1, b2)
+        bu = np.maximum(b1, b2)
+        bmin = np.maximum(bmin, bl)
+        bmax = np.minimum(bmax, bu)
+
+        lbins = int((lmax - lmin) / abs(self.delta['longitude'])) + 1
+        bbins = int((bmax - bmin) / abs(self.delta['latitude'])) + 1
+        ldir = self.delta['longitude'] / abs(self.delta['longitude'])
+        bdir = self.delta['latitude'] / abs(self.delta['latitude'])
+
+        maps = np.zeros([2,bbins, lbins])
+
+        for ll in range(lbins):
+            for bb in range(bbins):
+                lpix = self.coord2pix(lmax, 'longitude') - ll * ldir
+                bpix = self.coord2pix(bmin, 'latitude') + bb * bdir
+                lon = self.pix2coord(lpix, 'longitude')
+                lat = self.pix2coord(bpix, 'latitude')
+                # retrieve data
+                vel, Tb = self.getLineData(lon, lat, vmin, vmax)
+                if np.max(Tb) > threshold:
+                    maps[0, bb, ll] = np.sum(vel*Tb)/np.sum(Tb)
+                else:
+                    maps[0 ,bb, ll] = np.nan
+                maps[1, bb, ll] = np.sum(Tb)
+
+        maps[1] *= np.abs(self.delta['velocity'])/self.vscale
+
+        # create the figure
+        F = plt.figure(1, (9, 8))
+        F.subplots_adjust(left=0.08, right=0.95, top=0.95, bottom=0.08)
+        grid = AxesGrid(F, 111,
+                        nrows_ncols=(2, 1),
+                        axes_pad=0.2,
+                        label_mode="L",
+                        share_all=True,
+                        cbar_location="right",
+                        cbar_mode="each",
+                        cbar_size="7%",
+                        cbar_pad="2%",
+                        )
+
+        extent = (lmax, lmin, bmin, bmax)
+
+        # display the map
+        for s in range(2):
+            im = grid[s].imshow(maps[s],
+                                interpolation='none',
+                                origin='lower', cmap='Spectral_r', extent=extent)
+            if s==0:
+                grid.cbar_axes[s].colorbar(im,label="V (km s$^{-1}$)")
+            elif s==1:
+                grid.cbar_axes[s].colorbar(im,label="W (K km s$^{-1}$)")
+
+        # and set figure extent and axis labels
+        grid.axes_llc.set_xlabel('$l$ (deg)')
+        grid.axes_llc.set_ylabel('$b$ (deg)')
+        grid.axes_llc.set_xlim(lmax, lmin)
+        grid.axes_llc.set_ylim(bmin, bmax)
+
+        plt.show()
