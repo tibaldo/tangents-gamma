@@ -10,7 +10,7 @@ def Lagrangian5pts(T):
     
     dim=len(T)
     #derivees
-    dTdv = zeros(dim)
+    dTdv = np.zeros(dim)
     for iv in range(2,dim-2): #5-pt lagrangian derivative
         dTdv[iv] = (T[iv-2] - 8.0*T[iv-1] + 8.0*T[iv+1] - T[iv+2]) / 12. 
     return dTdv
@@ -28,7 +28,7 @@ def epsDetect(T,lng=3,sig=1,graphes=0,lis=0,name=time.strftime('%d-%m-%y_%H-%M',
     nbin=10
     x = arange(-nbin,nbin+1); # bins
     gauss = exp(- (x**2.) / dsig2) ;
-    gauss = gauss / sum(gauss) ;
+    gauss = gauss / np.sum(gauss) ;
     
     Tlis= convolve(T,gauss,'same')
     #derivees 2nd des spectres
@@ -45,10 +45,10 @@ def epsDetect(T,lng=3,sig=1,graphes=0,lis=0,name=time.strftime('%d-%m-%y_%H-%M',
     #recherche des intervalles de longueur > lonth avec d2Tdv2 < 0 continument
     lonth =lng #nb mini de bins contigus avec d2Tdv2 < 0
     Nband = 0 
-    indth = find(d2Tdv2 < 0.)
+    indth = np.where(d2Tdv2 < 0.)[0]
     nbth = len(indth) 
-    iband1 = zeros(nbth) 
-    iband2 = zeros(nbth) 
+    iband1 = np.zeros(nbth) 
+    iband2 = np.zeros(nbth) 
     ii1 = 0 
     while ii1 < nbth-2:
         ii2 = ii1 + 1 
@@ -75,7 +75,7 @@ def epsDetect(T,lng=3,sig=1,graphes=0,lis=0,name=time.strftime('%d-%m-%y_%H-%M',
     if Nband > 0:
         for iba in range(Nband):
             test = d2Tdv2[iband1[iba]:iband2[iba]] 
-            imin = argmin(test)  #min sur bande d2Tdv2 < 0 concernee
+            imin = np.argmin(test)  #min sur bande d2Tdv2 < 0 concernee
             iv_imin = iband1[iba] + imin  #indicage dans [0,dimv-1]
             if np.any(T[iband1[iba]:iband2[iba]]):#change to eliminate zero-peaks
                 ilin.append(iv_imin)

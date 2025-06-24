@@ -4,12 +4,14 @@ import time
 import gzip
 from astropy.io import fits
 from epsDetectS import epsDetect
+from mPSV import multiPSV_chi2
 from matplotlib.colors import LogNorm
 from mpl_toolkits.axes_grid1 import AxesGrid
 from pseudoVoigt import pseudoVoigt  # Quentin's version
 from reid19_rotation import rotcurve, R0, V0
 from MW_utils import lbd2vlsr
 from scipy.io import loadmat
+from iminuit import Minuit
 import pdb
 
 
@@ -27,7 +29,15 @@ def add_inner_title(ax, title, loc, size=None, **kwargs):
 
 
 class gascube:
-    def __init__(self, filename, int2col=1., Ts=-10, fitres_files=None):
+    def __init__(self, filename, int2col=1., Ts=-10, fitres_files=None, fitresl_file=None):
+        """
+
+        :param filename:
+        :param int2col:
+        :param Ts:
+        :param fitres_files: Fit results from Quentin
+        :param fitresl_file: Self-produced fit results
+        """
 
         hdus = fits.open(filename)
 
@@ -42,14 +52,16 @@ class gascube:
         self.delta = {}
         self.naxis = {}
         for i in range(naxis):
-            if (self.header.get('CTYPE' + str(i + 1)) == 'GLON-CAR'):
+            if (self.header.get('CTYPE' + str(i + 1)) == 'GLON-CAR' or
+            self.header.get('CTYPE' + str(i + 1)) == 'GLON'):
                 self.atlas['longitude'] = i + 1
                 self.refpix['longitude'] = self.header.get(
                     'CRPIX' + str(i + 1)) - 1
                 self.refval['longitude'] = self.header.get('CRVAL' + str(i + 1))
                 self.delta['longitude'] = self.header.get('CDELT' + str(i + 1))
                 self.naxis['longitude'] = self.header.get('NAXIS' + str(i + 1))
-            if (self.header.get('CTYPE' + str(i + 1)) == 'GLAT-CAR'):
+            if (self.header.get('CTYPE' + str(i + 1)) == 'GLAT-CAR' or
+            self.header.get('CTYPE' + str(i + 1)) == 'GLAT'):
                 self.atlas['latitude'] = i + 1
                 self.refpix['latitude'] = self.header.get(
                     'CRPIX' + str(i + 1)) - 1
@@ -62,7 +74,7 @@ class gascube:
                 'CTYPE' + str(i + 1)) == 'VEL' or self.header.get(
                 'CTYPE' + str(i + 1)) == 'VRAD'):
                 # initialise velocity unit
-                self.vscale = 1.
+                self.vscale = 1.e3
                 self.atlas['velocity'] = i + 1
                 self.refpix['velocity'] = self.header.get(
                     'CRPIX' + str(i + 1)) - 1
@@ -115,15 +127,31 @@ class gascube:
             try:
                 fitres = np.load(fitres_files[0])
                 fitdiag = np.load(fitres_files[1])
-                self.fitres['available'] = True
+                self.fitres['available'] = 'quentin'
             except:
                 try:
                     fitres = loadmat(fitres_files[0])
                     fitdiag = loadmat(fitres_files[1])
-                    self.fitres['available'] = True
+                    self.fitres['available'] = 'quentin'
                 except:
                     pass
-        if self.fitres['available']:
+        elif not fitresl_file == None:
+            try:
+                if isinstance(fitresl_file,str):
+                    fitres = np.load(fitresl_file,allow_pickle=True)
+                    self.fitres['available'] = 'luigi'
+                    self.fitres['results'] = fitres['results'][()]
+                elif isinstance(fitresl_file,list):
+                    d = {}
+                    for filename in fitresl_file:
+                        fitres = np.load(filename, allow_pickle=True)
+                        d.update(fitres['results'][()])
+                    self.fitres['available'] = 'luigi'
+                    self.fitres['results'] = d
+
+            except:
+                pass
+        if self.fitres['available'] == 'quentin':
             self.fitres['vlin'] = fitres['vlin']
             self.fitres['hfit'] = fitres['hfit']
             self.fitres['vfit'] = fitres['vfit']
@@ -234,9 +262,75 @@ class gascube:
 
         return vel, self.fitres['vfit'][il, ib, :], PV, Tfit, aic
 
+    def getFitResultsl(self, l, b):
+        ll = self.coord2pix(l, 'longitude')
+        bb = self.coord2pix(b, 'latitude')
+        try:
+            fit_results = self.fitres['results'][(ll, bb)]
+            fit_valid = fit_results['fit_valid']
+            model = fit_results['model']
+            vmodel = fit_results['vmodel']
+            ind_lines = fit_results['ind_lines']
+            vlin = fit_results['vlin']
+            dev = fit_results['dev']
+        except:
+            fit_valid = False
+            model = None
+            vmodel = None
+            ind_lines = None
+            vlin = None
+            dev = 1.e10
+
+        return fit_valid, model, vmodel, ind_lines,vlin, dev
+
+    def mPSV_profile_fit(self, vv, tb, lis=1, lng=5, thresh=5, sig=2, print_level=1):
+
+        # line detection
+        ilin, eps = epsDetect(tb, lis=lis, lng=lng, sig=sig)
+        ilin = np.array(ilin).astype('int')
+        eps = np.array(eps)
+        ilin = ilin[eps > thresh]
+        eps = eps[eps > thresh]
+        vlin = vv[ilin]
+
+        # fit, define chi square
+        chi2 = multiPSV_chi2(vv, tb)
+        # define params tuple, initial values, limits, etc
+        ivals = np.array([])
+        ptup = ()
+        for n in range(len(eps)):
+            ptup = ptup + ('A_' + str(n),)
+            ivals = np.append(ivals,eps[n]*10)
+            ptup = ptup + ('x0_' + str(n),)
+            ivals = np.append(ivals,vlin[n])
+            ptup = ptup + ('gammaG_' + str(n),)
+            ivals = np.append(ivals, 5.)
+            ptup = ptup + ('gammaL_' + str(n),)
+            ivals = np.append(ivals, 5.)
+        m = Minuit(chi2, *ivals, name=ptup)
+        # set parameter limits and errors guess
+        for n in range(len(eps)):
+            m.limits['A_' + str(n)] = (0., 1.e5)
+            m.limits['x0_' + str(n)] = (vlin[n] - 5, vlin[n] + 5)
+            m.limits['gammaG_' + str(n)] = (0., 1.e2)
+            m.limits['gammaL_' + str(n)] = (0., 1.e2)
+        fitres = m.migrad()
+        vals = [p.value for p in m.params]
+        model = chi2.multiPSV(*vals)
+        ind_lines = []
+        # save fitted line velocities
+        vfit = []
+        for n in range(len(eps)):
+            ind_lines.append(chi2.PSV(*vals[4 * n:4 * (n + 1)]))
+            vfit.append(m.params['x0_' + str(n)].value)
+
+        del m  # try to save memory
+
+        return fitres, model, ind_lines, vfit
+
 
     def line(self, l, b, vmin, vmax, vcuts=False, dcuts=False, cutfile = False,
-             plotFit=False, lineDtc=False, lng=2, lis=1, sig=2.5, thresh=3., fitLine=False):
+             plotFit=False, lineDtc=False, lng=2, lis=1, sig=2.5, thresh=3., dev_thresh=0.3, fitLine=False):
 
         vel, Tb = self.getLineData(l, b, vmin, vmax)
 
@@ -271,7 +365,7 @@ class gascube:
                 plt.axvline(vlsr, color='k')
 
         if plotFit:
-            if self.fitres['available']:
+            if self.fitres['available'] == 'quentin':
                 vel, vfit, PV, Tfit, aic = self.getFitResults(l, b, vmin, vmax)
                 for klin in range(np.shape(PV)[1]):
                     self.ax.plot(vel, PV[:, klin], color='g', linestyle='--')
@@ -279,6 +373,16 @@ class gascube:
                 dev = np.sum(np.abs(Tb - Tfit)) / np.sum(Tb)
                 print('AIC', aic)
                 print('integrated fractional model deviation', dev)
+            elif self.fitres['available'] == 'luigi':
+                # problem with axis handling, need to save v
+                fit_valid, model, vmodel, ind_lines, vlin, dev = self.getFitResultsl(l,b)
+                # loose convergence criteria
+                if fit_valid and dev < dev_thresh:
+                    self.ax.plot(vmodel, model, color='r', )
+                    for n in range(len(ind_lines)):
+                        self.ax.plot(vmodel, ind_lines[n], color='g', linestyle='--')
+                else:
+                    print('bad fit results')
             else:
                 print("Fit results not available")
 
@@ -298,13 +402,10 @@ class gascube:
             for n in range(len(ind_lines)):
                 self.ax.plot(vel, ind_lines[n], color='g', linestyle='--')
                 dev = np.sum(np.abs(Tb - model)) / np.sum(Tb)
-            if (fitres['is_valid'] == True or \
-                (fitres['has_covariance'] == True and fitres[
-                    'has_valid_parameters'] == True and \
-                 (fitres['has_reached_call_limit'] == False or fitres[
-                     'is_above_max_edm'] == False)) \
-                    ) \
-                    and dev < 1.:
+            # loose convergence criteria
+            if (fitres.valid == True or (
+                    fitres._fmin.has_covariance == True and fitres._fmin.has_valid_parameters == True and (
+                    fitres._fmin.has_reached_call_limit == False) or fitres._fmin.is_above_max_edm == False)) and dev < 1.:
                 print('fit succeeded')
             else:
                 print('fit failed')
@@ -312,6 +413,62 @@ class gascube:
             print('integrated fractional model deviation', dev)
 
         plt.show()
+
+    def fitlines(self,lmin, lmax, bmin, bmax, vmin, vmax,
+                 filename, outdir='./',
+                 lng=2, lis=1, sig=2.5, thresh=3.):
+
+        # check if required region is covered by input file, otherwise modify boundaries
+        l1 = self.pix2coord(0, 'longitude')
+        l2 = self.pix2coord(self.naxis['longitude'] - 1, 'longitude')
+        ll = np.minimum(l1, l2)
+        lu = np.maximum(l1, l2)
+        lmin = np.maximum(lmin, ll)
+        lmax = np.minimum(lmax, lu)
+        b1 = self.pix2coord(0, 'latitude')
+        b2 = self.pix2coord(self.naxis['latitude'] - 1, 'latitude')
+        bl = np.minimum(b1, b2)
+        bu = np.maximum(b1, b2)
+        bmin = np.maximum(bmin, bl)
+        bmax = np.minimum(bmax, bu)
+
+        lbins = int((lmax - lmin) / abs(self.delta['longitude'])) + 1
+        bbins = int((bmax - bmin) / abs(self.delta['latitude'])) + 1
+        ldir = self.delta['longitude'] / abs(self.delta['longitude'])
+        bdir = self.delta['latitude'] / abs(self.delta['latitude'])
+
+        results = {}
+
+        for ll in range(lbins):
+            for bb in range(bbins):
+                print('{} of {}, {} of {}'.format(ll,lbins,bb,bbins))
+                lpix = self.coord2pix(lmax, 'longitude') - ll * ldir
+                bpix = self.coord2pix(bmin, 'latitude') + bb * bdir
+                lon = self.pix2coord(lpix, 'longitude')
+                lat = self.pix2coord(bpix, 'latitude')
+
+                # retrieve data
+                vel, Tb = self.getLineData(lon, lat, vmin, vmax)
+                # perform fit
+                fitres, model, ind_lines, vlin = self.mPSV_profile_fit(vel, Tb, lis=lis, lng=lng,
+                                                                       thresh=thresh, sig=sig)
+
+                if (fitres.valid == True or (
+                        fitres._fmin.has_covariance == True and fitres._fmin.has_valid_parameters == True and (
+                        fitres._fmin.has_reached_call_limit == False) or fitres._fmin.is_above_max_edm == False)):
+                    fit_valid = True
+                else:
+                    fit_valid = False
+
+                dev = np.sum(np.abs(Tb - model)) / np.sum(Tb)
+                results[(lpix,bpix)] = {'fit_valid': fit_valid,
+                                        'model': model,
+                                        'vmodel' : vel,
+                                        'ind_lines' : ind_lines,
+                                        'vlin' : vlin,
+                                        'dev' : dev}
+
+        np.savez(outdir+filename, results=results)
 
     def column(self, vel, Tb, Tbkg=2.66):
 
@@ -441,23 +598,39 @@ class gascube:
                     vel, Tb = self.getLineData(lon, lat, vmin, vmax)
                     if useFit:
                         good_fit = False
-                        velf, vfit, PV, Tfit, aic = self.getFitResults(lon, lat, vmin, vmax)
-                        dev = np.sum(np.abs(Tb - Tfit)) / np.sum(Tb)
-                        if np.sum(np.abs(Tb)) == 0.:
-                            msg = 'lon {} lat {} NODATA'.format(lon, lat)
-                            history.append(msg)
-                        elif len(vfit) == 0:
-                            msg = 'lon {} lat {} fit FAILED'.format(lon, lat)
-                            history.append(msg)
-                        elif np.abs(dev) > dev_thresh:
-                            msg = 'lon {} lat {} fit BAD, integrated fractional model deviation {}'.format(
-                                lon, lat, dev)
-                            history.append(msg)
-                        else:
-                            good_fit = True
-                            msg = 'lon {} lat {} integrated fractional model deviation {}'.format(
-                                lon, lat, dev)
-                            history.append(msg)
+                        #     self.ax.plot(vmodel, model, color='r', )
+                        #     for n in range(len(ind_lines)):
+                        #         self.ax.plot(vmodel, ind_lines[n], color='g', linestyle='--')
+                        if self.fitres['available'] == 'quentin':
+                            velf, vfit, PV, Tfit, aic = self.getFitResults(lon, lat, vmin, vmax)
+                            dev = np.sum(np.abs(Tb - Tfit)) / np.sum(Tb)
+                            if np.sum(np.abs(Tb)) == 0.:
+                                msg = 'lon {} lat {} NODATA'.format(lon, lat)
+                                history.append(msg)
+                            elif len(vfit) == 0:
+                                msg = 'lon {} lat {} fit FAILED'.format(lon, lat)
+                                history.append(msg)
+                            elif np.abs(dev) > dev_thresh:
+                                msg = 'lon {} lat {} fit BAD, integrated fractional model deviation {}'.format(
+                                    lon, lat, dev)
+                                history.append(msg)
+                            else:
+                                good_fit = True
+                                msg = 'lon {} lat {} integrated fractional model deviation {}'.format(
+                                    lon, lat, dev)
+                                history.append(msg)
+                        elif self.fitres['available'] == 'luigi':
+                            fit_valid, Tfit, velf, ind_lines, vfit, dev = self.getFitResultsl(lon, lat)
+                            # loose convergence criteria
+                            if fit_valid and dev < dev_thresh:
+                                good_fit = True
+                                msg = 'lon {} lat {} integrated fractional model deviation {}'.format(
+                                    lon, lat, dev)
+                                history.append(msg)
+                            else:
+                                msg = 'lon {} lat {} fit BAD, integrated fractional model deviation {}'.format(
+                                    lon, lat, dev)
+                                history.append(msg)
                     for s in range(nn):
                         if vcuts:
                             vrange = vcuts[s]
@@ -468,11 +641,16 @@ class gascube:
                             vup = vlsr[s + 1]
                         if useFit and good_fit:
                             # add integral of all lines that have a peak in the velo range
-                            for klin, vlin in enumerate(vfit):
-                                if vlin >= vlow and vlin < vup:
-                                    vmaps[s, bb, ll] += self.column(velf, PV[:, klin])
-                                else:
-                                    pass
+                            if self.fitres['available'] == 'quentin':
+                                for klin, vlin in enumerate(vfit):
+                                    if vlin >= vlow and vlin < vup:
+                                        vmaps[s, bb, ll] += self.column(velf, PV[:, klin])
+                                    else:
+                                        pass
+                            elif self.fitres['available'] == 'luigi':
+                                for klin, vlin in enumerate(vfit):
+                                    if vlin >= vlow and vlin < vup:
+                                        vmaps[s, bb, ll] += self.column(velf, ind_lines[klin])
                             # correct for the residual colmn density
                             correction = self.column(vel[(vel >= vlow) & (vel < vup)],
                                                      Tb[(vel >= vlow) & (vel < vup)])
@@ -617,7 +795,8 @@ class gascube:
         plt.show()
 
 
-    def vdiagram_fit(self, lmin, lmax, bmin, bmax, vmin, vmax, integrate='latitude'):
+    def vdiagram_fit(self, lmin, lmax, bmin, bmax, vmin, vmax, integrate='latitude',
+                     vlow = None, vup = None):
 
         # check if required region is covered by input file, otherwise modify boundaries
         l1 = self.pix2coord(0, 'longitude')
@@ -660,18 +839,24 @@ class gascube:
                 bpix = self.coord2pix(bmin, 'latitude') + bb * bdir
                 lon = self.pix2coord(lpix, 'longitude')
                 lat = self.pix2coord(bpix, 'latitude')
-                velf, vfit, PV, Tfit, aic = self.getFitResults(lon, lat, vmin, vmax)
+                if self.fitres['available'] == 'quentin':
+                    velf, vfit, PV, Tfit, aic = self.getFitResults(lon, lat, vmin, vmax)
+                elif self.fitres['available'] == 'luigi':
+                    fit_valid, Tfit, velf, ind_lines, vfit, dev = self.getFitResultsl(lon, lat)
                 for vv in range(vbins):
                     vpix = self.coord2pix(self.vscale * vmin, 'velocity') + vv * vdir
                     vel = self.pix2coord(vpix, 'velocity')/self.vscale
                     for klin, vlin in enumerate(vfit):
-                        # check if line velocity falls within bin and that there is valid a fitted profile
-                        if np.abs(vlin - vel) <= np.abs(self.delta['velocity']/self.vscale) / 2 and \
-                                klin < len(PV[0,:]):
+                        # check if line velocity falls within bin
+                        if np.abs(vlin - vel) <= np.abs(self.delta['velocity']/self.vscale) / 2:
+                            if self.fitres['available'] == 'quentin':
+                                column = self.column(velf, PV[:, klin])
+                            elif self.fitres['available'] == 'luigi':
+                                column = self.column(velf, ind_lines[klin])
                             if integrate == 'latitude':
-                                im[vv,ll] += self.column(velf, PV[:, klin])
+                                im[vv,ll] += column
                             elif integrate == 'longitude':
-                                im[bb,vv] += self.column(velf, PV[:, klin])
+                                im[bb,vv] += column
                         else:
                             pass
 
@@ -698,10 +883,87 @@ class gascube:
                    cmap='jet')
         cbar = plt.colorbar(label="N(H) 10^20 cm^-2")
 
+        if vlow==None and vup==None:
+            pass
+        else:
+            if integrate=='longitude':
+                ax.axvline(vlow,color='k',linestyle='-')
+                ax.axvline(vup, color='k', linestyle='-')
+            elif integrate=='latitude':
+                ax.axhline(vlow, color='k', linestyle='-')
+                ax.axhline(vup, color='k', linestyle='-')
+
         plt.show()
 
-    def weightedv_maps(self, lmin, lmax, bmin, bmax, vmin, vmax, threshold=3.,
-                       cmap = 'Spectral_r',display=True):
+    # def extract_vfeature(self,lmin, lmax, bmin, bmax, vmin, vmax, vlow, vup, lng=2, lis=1, sig=2.5, thresh=3.,saveMaps=False, display=True, authname='L. Tibaldo',
+    #            authemail='luigi.tibaldo@irap.omp.eu'):
+    #
+    #     # check if required region is covered by input file, otherwise modify boundaries
+    #     l1 = self.pix2coord(0, 'longitude')
+    #     l2 = self.pix2coord(self.naxis['longitude'] - 1, 'longitude')
+    #     ll = np.minimum(l1, l2)
+    #     lu = np.maximum(l1, l2)
+    #     lmin = np.maximum(lmin, ll)
+    #     lmax = np.minimum(lmax, lu)
+    #     b1 = self.pix2coord(0, 'latitude')
+    #     b2 = self.pix2coord(self.naxis['latitude'] - 1, 'latitude')
+    #     bl = np.minimum(b1, b2)
+    #     bu = np.maximum(b1, b2)
+    #     bmin = np.maximum(bmin, bl)
+    #     bmax = np.minimum(bmax, bu)
+    #
+    #
+    #     lbins = int((lmax - lmin) / abs(self.delta['longitude'])) + 1
+    #     bbins = int((bmax - bmin) / abs(self.delta['latitude'])) + 1
+    #     ldir = self.delta['longitude'] / abs(self.delta['longitude'])
+    #     bdir = self.delta['latitude'] / abs(self.delta['latitude'])
+    #
+    #     F = plt.figure(1, (9, 8))
+    #     F.subplots_adjust(left=0.08, right=0.95, top=0.95, bottom=0.08)
+    #     ax = F.subplots()
+    #     extent = (lmax, lmin, bmin, bmax)
+    #
+    #     vmap = np.zeros([bbins, lbins])
+    #
+    #     for ll in range(lbins):
+    #         for bb in range(bbins):
+    #             lpix = self.coord2pix(lmax, 'longitude') - ll * ldir
+    #             bpix = self.coord2pix(bmin, 'latitude') + bb * bdir
+    #             lon = self.pix2coord(lpix, 'longitude')
+    #             lat = self.pix2coord(bpix, 'latitude')
+    #             # retrieve data, and, in case fit
+    #             vel, Tb = self.getLineData(lon, lat, vmin, vmax)
+    #             # perform fit
+    #             fitres, model, ind_lines, vlin = self.mPSV_profile_fit(vel, Tb, lis=lis, lng=lng,
+    #                                                                    thresh=thresh, sig=sig)
+    #             # for n in range(len(ind_lines)):
+    #             #     self.ax.plot(vel, ind_lines[n], color='g', linestyle='--')
+    #             #     dev = np.sum(np.abs(Tb - model)) / np.sum(Tb)
+    #             # loose convergence criteria
+    #             if (fitres.valid == True or (
+    #                     fitres._fmin.has_covariance == True and fitres._fmin.has_valid_parameters == True and (
+    #                     fitres._fmin.has_reached_call_limit == False) or fitres._fmin.is_above_max_edm == False)) and dev < 1.:
+    #                 # correct for the residual column density
+    #                 correction = self.column(vel[(vel >= vlow) & (vel < vup)],
+    #                                          Tb[(vel >= vlow) & (vel < vup)])
+    #                 for klin, ind_line in enumerate(ind_lines):
+    #                     # add integral of all lines that have a peak in the velo range
+    #                     if vlin[klin] >= vlow and vlin[klin] < vup:
+    #                         vmaps[bb, ll] += self.column(vv, ind_line)
+    #                     else:
+    #                         pass
+    #                     # subtract model from correction
+    #                     correction -= self.column(vel[(vel >= vlow) & (vel < vup)],
+    #                                               ind_line[(vel >= vlow) & (vel < vup)])
+    #                 vmaps[s, bb, ll] += correction
+    #             else:
+    #                 vmaps[s, bb, ll] = self.column(vel[(vel >= vlow) & (vel < vup)],
+    #                                                Tb[(vel >= vlow) & (vel < vup)])
+    #
+
+
+
+    def weightedv_maps(self, lmin, lmax, bmin, bmax, vmin, vmax, threshold=3.):
 
         # check if required region is covered by input file, otherwise modify boundaries
         l1 = self.pix2coord(0, 'longitude')
@@ -741,8 +1003,8 @@ class gascube:
         maps[1] *= np.abs(self.delta['velocity'])/self.vscale
 
         # create the figure
-        F = plt.figure(1, (9, 7))
-        F.subplots_adjust(left=0.12, right=0.9, top=0.95, bottom=0.08)
+        F = plt.figure(1, (9, 8))
+        F.subplots_adjust(left=0.08, right=0.95, top=0.95, bottom=0.08)
         grid = AxesGrid(F, 111,
                         nrows_ncols=(2, 1),
                         axes_pad=0.2,
@@ -760,19 +1022,16 @@ class gascube:
         for s in range(2):
             im = grid[s].imshow(maps[s],
                                 interpolation='none',
-                                origin='lower', cmap=cmap, extent=extent)
+                                origin='lower', cmap='Spectral_r', extent=extent)
             if s==0:
                 grid.cbar_axes[s].colorbar(im,label="V (km s$^{-1}$)")
             elif s==1:
-                grid.cbar_axes[s].colorbar(im,label="W$_\mathrm{CO}$ (K km s$^{-1}$)")
+                grid.cbar_axes[s].colorbar(im,label="W (K km s$^{-1}$)")
 
         # and set figure extent and axis labels
-        grid.axes_llc.set_xlabel('Galactic longitude (deg)')
-        grid.axes_llc.set_ylabel('Galactic latitude (deg)')
+        grid.axes_llc.set_xlabel('$l$ (deg)')
+        grid.axes_llc.set_ylabel('$b$ (deg)')
         grid.axes_llc.set_xlim(lmax, lmin)
         grid.axes_llc.set_ylim(bmin, bmax)
 
-        if display:
-            plt.show()
-
-        return F, grid
+        plt.show()

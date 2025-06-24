@@ -14,7 +14,7 @@ class multiPSV_chi2:
         eta = 1.36603 * (fL / f) - 0.47719 * np.power(fL / f, 2) + 0.11116 * np.power(fL / f, 3)
         fcn = eta * np.exp(-0.5 * np.power((self.x - x0) / gammaG, 2)) / (np.sqrt(np.pi) * gammaG)
         fcn += (1 - eta) * np.power(1 + np.power((self.x - x0) / gammaL, 2), -1) / (np.pi * gammaL)
-        fcn *= A * 10000
+        fcn *= A
         return fcn
 
     def multiPSV(self, *args):
