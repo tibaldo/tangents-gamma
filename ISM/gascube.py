@@ -962,8 +962,8 @@ class gascube:
     #
 
 
-
-    def weightedv_maps(self, lmin, lmax, bmin, bmax, vmin, vmax, threshold=3.):
+    def weightedv_maps(self, lmin, lmax, bmin, bmax, vmin, vmax, threshold=3.,
+                       cmap = 'Spectral_r',display=True):
 
         # check if required region is covered by input file, otherwise modify boundaries
         l1 = self.pix2coord(0, 'longitude')
@@ -1003,8 +1003,8 @@ class gascube:
         maps[1] *= np.abs(self.delta['velocity'])/self.vscale
 
         # create the figure
-        F = plt.figure(1, (9, 8))
-        F.subplots_adjust(left=0.08, right=0.95, top=0.95, bottom=0.08)
+        F = plt.figure(1, (9, 7))
+        F.subplots_adjust(left=0.12, right=0.9, top=0.95, bottom=0.08)
         grid = AxesGrid(F, 111,
                         nrows_ncols=(2, 1),
                         axes_pad=0.2,
@@ -1022,16 +1022,19 @@ class gascube:
         for s in range(2):
             im = grid[s].imshow(maps[s],
                                 interpolation='none',
-                                origin='lower', cmap='Spectral_r', extent=extent)
+                                origin='lower', cmap=cmap, extent=extent)
             if s==0:
                 grid.cbar_axes[s].colorbar(im,label="V (km s$^{-1}$)")
             elif s==1:
-                grid.cbar_axes[s].colorbar(im,label="W (K km s$^{-1}$)")
+                grid.cbar_axes[s].colorbar(im,label="W$_\mathrm{CO}$ (K km s$^{-1}$)")
 
         # and set figure extent and axis labels
-        grid.axes_llc.set_xlabel('$l$ (deg)')
-        grid.axes_llc.set_ylabel('$b$ (deg)')
+        grid.axes_llc.set_xlabel('Galactic longitude (deg)')
+        grid.axes_llc.set_ylabel('Galactic latitude (deg)')
         grid.axes_llc.set_xlim(lmax, lmin)
         grid.axes_llc.set_ylim(bmin, bmax)
 
-        plt.show()
+        if display:
+            plt.show()
+
+        return F, grid
